@@ -70,15 +70,13 @@ The timeline below is generally planned, but it is highly possible to get adjust
 **Week 2: View of Interests Management**
 
 
-**Week 3: Daily Log System**
-- Implement the Daily Timeline Log UI using shadcn/ui components, including a button for loading earlier logs.
-- Implement tag categories (grooming, activities, feeding, vet).
-- Build API routes for log creation, editing, and deletion.
-
-**Weeks 4-4.5: File Handling & Optional Features**
+**Week 3:**
 
 
-**Weeks 4.5-5: Final Report, Demo & Polish**
+**Weeks 4-4.5:**
+
+
+**Weeks 4.5-5:**
 - Polish the UI for an improved user experience.
 - Write the final report.
 - Record a demo video showcasing the core features.
