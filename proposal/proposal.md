@@ -22,12 +22,14 @@ The application will utilize **React Native** with **Expo** as its development f
 **Core Features:**
 
 1. **User Authentication:**
-   - **Feature:** 
-   - **Technical Approach:**
+   - **Feature:** Secure user login and account management.
+   - **Technical Approach:** Use Supabase Auth and support email/password login initially, with optional OAuth providers (e.g., Google) if time allows.
 
 2. **Add and view points of interest**
-   - **Feature:**
-   - **Technical Approach:** 
+   - **Feature:** Users can add and view points of interest with name, location, description, etc.
+   - **Technical Approach:** Use core components like View, Text, Button, TextInput, etc. to manage POI creation/update. *(Please refer to the attached images for add/update screen design draft.)*
+   - **Design draft**:
+     - ![add/update screen](https://github.com/nichi1114/local-guide/blob/main/proposal/add_update_screen.png?raw=true)
 
 3. **Screen Navigation:**
    - **Feature:** 
@@ -51,13 +53,17 @@ The application will utilize **React Native** with **Expo** as its development f
    - **Feature:**
    - **Technical Approach:**
 
-8. **Use Expo Location to show nearby places:**
+8. **Expo Location to show nearby places**
+   - **Feature:**
+   - **Technical Approach:**
+
+9. **Use Expo Camera to capture photos of places (Optional):**
    - **Feature:**
    - **Technical Approach:**
 
 **Optional features??**
 
-This project meets the core requirements and advanced requirements for **User Authentication** and **Mobile Sensors or Device APIs**. It can be completed within a timeline of 4 to 5 weeks and will focus on essential functionalities such as navigation, view points of interest management, state management and persistence, and backend integration. Additional features, such as xxx, xxx, may be included as optional enhancements depending on the available time. What's more, UI design can be simplified if necessary to ensure the project is completed on time.
+This project meets the core requirements and advanced requirements for **User Authentication** and **Mobile Sensors or Device APIs**. It can be completed within a timeline of 4 to 5 weeks and will focus on essential functionalities such as navigation, view points of interest management, state management and persistence, and backend integration. Additional features, such as Expo Location to show nearby places, xxx, may be included as optional enhancements depending on the available time. What's more, UI design can be simplified if necessary to ensure the project is completed on time.
 
 ## Tentative Plan
 The timeline below is generally planned, but it is highly possible to get adjusted.
@@ -65,7 +71,7 @@ The timeline below is generally planned, but it is highly possible to get adjust
 **Week 1: Setup & User Authentication**
 
 
-**Week 2: View Points of Interest Management**
+**Week 2: Points of Interest Management**
 
 
 **Week 3:**
