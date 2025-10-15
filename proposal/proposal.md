@@ -7,7 +7,9 @@
 With the rise of the internet and social media, people increasingly enjoy taking photos at popular, internet-famous locations. However, most current apps prioritize broad, global recommendations over personalized local exploration. This highlights the need for a lightweight mobile tool that enables users to record, revisit, and organize their own local discoveries in a single, convenient platform. Our app addresses this need by offering a straightforward and user-friendly platform for organizing local points of interest. The target users are local adventurers who enjoy exploring their city, trying new cafes, parks, or attractions, and want an easy way to record and remember those discoveries.
 
 ## Objective and Key Features
-[Clear statement of project objectives]
+The project aims to create a Local Guide app for local adventurers, allowing them to add, view, and organize their local points of interest in a safe, simple, and intuitive way.
+
+The application will utilize **React Native** with **Expo** as its development framework, implemented in **TypeScript**. State management will be handled by the **Context API**, and data will be persisted locally using **React Native Async Storage** to retain state across app restarts.
 
 [Detailed description of core features, including:
 - Navigation structure (e.g., screens, file-based routes, and layouts for Expo Router, or navigators like Stack, Tabs, or Drawer for React Navigation with TypeScript typing)
