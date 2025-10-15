@@ -4,13 +4,7 @@
 * Team member: Yiduo Jing [1000308142], Sitao Wang [1003695151]
 
 ## Motivation
-With the rise of the internet and social media, people increasingly enjoy taking photos at popular, internet-famous locations. However, while many social media platforms have built-in local guides, there are few dedicated local guide apps, and their features are often limited. Our goal is to create a mobile app that delivers a unique experience through comprehensive local guide journaling.......
-
-[Identify the problem or need your project addresses]
-[Explain why the project is worth pursuing]
-[Describe target users]
-[Optional: Discuss existing solutions and their limitations]
-
+With the rise of the internet and social media, people increasingly enjoy taking photos at popular, internet-famous locations. However, most current apps prioritize broad, global recommendations over personalized local exploration. This highlights the need for a lightweight mobile tool that enables users to record, revisit, and organize their own local discoveries in a single, convenient platform. Our app addresses this need by offering a straightforward and user-friendly platform for organizing local points of interest. The target users are local adventurers who enjoy exploring their city, trying new cafes, parks, or attractions, and want an easy way to record and remember those discoveries.
 
 ## Objective and Key Features
 [Clear statement of project objectives]
@@ -69,7 +63,7 @@ The timeline below is generally planned, but it is highly possible to get adjust
 **Week 1: Setup & User Authentication**
 
 
-**Week 2: View of Interests Management**
+**Week 2: View Points of Interest Management**
 
 
 **Week 3:**
