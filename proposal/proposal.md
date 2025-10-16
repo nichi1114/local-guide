@@ -11,14 +11,6 @@ The project aims to create a Local Guide app for local adventurers, allowing the
 
 The application will utilize **React Native** with **Expo** as its development framework, implemented in **TypeScript**. State management will be handled by the **Context API**, and data will be persisted locally using **React Native Async Storage** to retain state across app restarts.
 
-[Detailed description of core features, including:
-- Navigation structure (e.g., screens, file-based routes, and layouts for Expo Router, or navigators like Stack, Tabs, or Drawer for React Navigation with TypeScript typing)
-- State management and persistence approach
-- Notification setup
-- Backend integration details
-- Deployment plan with Expo EAS Build
-- Planned advanced features (at least two)]
-
 **Core Features:**
 
 1. **User Authentication:**
@@ -26,17 +18,28 @@ The application will utilize **React Native** with **Expo** as its development f
    - **Technical Approach:** Use Supabase Auth and support email/password login initially, with optional OAuth providers (e.g., Google) if time allows.
 
 2. **Add and view points of interest**
-   - **Feature:** Users can add and view points of interest with name, location, description, etc.
+   - **Feature:** Users can add and view points of interest with name, location, description (note), etc.
    - **Technical Approach:** Use core components like View, Text, Button, TextInput, etc. to manage POI creation/update. *(Please refer to the attached images for add/update screen design draft.)*
-   - **Design draft**:
-     - ![add/update screen](https://github.com/nichi1114/local-guide/blob/main/proposal/add_update_screen.png?raw=true)
+   ![add/update screen](https://github.com/nichi1114/local-guide/blob/main/proposal/add_update_screen.png?raw=true)
+   ![details screen](https://github.com/nichi1114/local-guide/blob/main/proposal/details_screen.png?raw=true)
 
 3. **Screen Navigation:**
-   - **Feature:** 
-   - **Technical Approach:**
-   - **Design draft**:
-     - ![name](link)
-
+   - **Feature:** There are primarily four types of screens: the signup/login screen, the home screen, the add/update screen, and the details screen. When not logged in, the navigation flow is (signup) -> login -> home. After logging in, the flow changes to home -> add/edit -> home or home -> details.
+   - **Technical Approach:** Use Expo Router for file-based routing. All screens are organized using stack navigatior, and the back button functionality is supported. The folder structure will be organized as follows:
+      ```plaintext
+      app/
+      ├── (auth)/
+      │   ├── login.tsx
+      │   ├── signup.tsx
+      │   ├── _layout.tsx         → Auth layout
+      ├── (main)/
+      │   ├── index.tsx           → Home Screen
+      │   ├── add-edit.tsx        → Add or update
+      │   ├── place/[id].tsx      → Details Screen
+      ├── _layout.tsx             → Root layout
+      components/
+      ├── ...
+      ```
 4. **State Management and Persistence:**
    - **Feature:**
    - **Technical Approach:**
@@ -60,8 +63,6 @@ The application will utilize **React Native** with **Expo** as its development f
 9. **Use Expo Camera to capture photos of places (Optional):**
    - **Feature:**
    - **Technical Approach:**
-
-**Optional features??**
 
 This project meets the core requirements and advanced requirements for **User Authentication** and **Mobile Sensors or Device APIs**. It can be completed within a timeline of 4 to 5 weeks and will focus on essential functionalities such as navigation, view points of interest management, state management and persistence, and backend integration. Additional features, such as Expo Location to show nearby places, xxx, may be included as optional enhancements depending on the available time. What's more, UI design can be simplified if necessary to ensure the project is completed on time.
 
