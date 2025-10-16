@@ -20,6 +20,7 @@ The application will utilize **React Native** with **Expo** as its development f
 2. **Add and view points of interest**
    - **Feature:** Users can add and view points of interest with name, location, description (note), etc.
    - **Technical Approach:** Use core components like View, Text, Button, TextInput, etc. to manage POI creation/update. *(Please refer to the attached images for add/update screen design draft.)*
+   
    ![add/update screen](https://github.com/nichi1114/local-guide/blob/main/proposal/add_update_screen.png?raw=true)
    ![details screen](https://github.com/nichi1114/local-guide/blob/main/proposal/details_screen.png?raw=true)
 
