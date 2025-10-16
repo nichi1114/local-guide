@@ -18,9 +18,9 @@ The application will utilize **React Native** with **Expo** as its development f
    - **Technical Approach:** Use Supabase Auth and support email/password login initially, with optional OAuth providers (e.g., Google) if time allows.
 
 2. **Add and view points of interest**
-   - **Feature:** Users can add and view points of interest with name, location, description (note), etc.
-   - **Technical Approach:** Use core components like View, Text, Button, TextInput, etc. to manage POI creation/update. *(Please refer to the attached images for add/update screen design draft.)*
-   
+   - **Feature:** Users can add and view points of interest with name, category, location, description (note), etc.
+   - **Technical Approach:** Use core components like View, Text, Button, TextInput, etc. to manage POI creation/update. The category can be selected from a dropdown picker, preferably a tag-based picker, or fetched from Google Places if time permits. The location can be input as text or selected using the current location feature through Expo Location, or by utilizing a small map picker depending on the time. *(Please refer to the attached images for add/update screen design draft.)*
+
    ![add/update screen](https://github.com/nichi1114/local-guide/blob/main/proposal/add_update_screen.png?raw=true)
    ![details screen](https://github.com/nichi1114/local-guide/blob/main/proposal/details_screen.png?raw=true)
 
@@ -42,16 +42,16 @@ The application will utilize **React Native** with **Expo** as its development f
       ├── ...
       ```
 4. **State Management and Persistence:**
-   - **Feature:**
+   - **Feature:** Persist states such as Authentication, Points of Interest, and UI elements (e.g., theme).
    - **Technical Approach:**
 
 5. **Notifications:**
-   - **Feature:**
-   - **Technical Approach:**
+   - **Feature:** Send a local notification at a scheduled time, either daily or weekly, to remind users to visit places and add points of interest. Tapping the notification takes users to the home screen.
+   - **Technical Approach:** Utilize Expo Notifications and Permissions to set a trigger for a specific time, such as 9 a.m. every day.
 
 6. **Backend Integration:**
-   - **Feature:**
-   - **Technical Approach:**
+   - **Feature:** Integrate the app with a backend service for persistant storage of POIs.
+   - **Technical Approach:** Create a places table in Supabase with fields: id, user_id, name, category, description, latitude, longitude, and created_at. Enable Row-Level Security (RLS) so users can only access their own records. Use the Supabase client SDK in React Native for CRUD operations on POIs. If time allows, consider using Supabase Realtime to subscribe to updates in the places table and refresh the UI instantly.
 
 7. **Deployment:**  
    - **Feature:**
