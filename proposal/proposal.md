@@ -1,4 +1,4 @@
-# Local Guide (TBD)
+# Local Guide
 
 * Duration: 4.5 Weeks (development) + 0.5 Week (report + demo + buffer time)
 * Team member: Yiduo Jing [1000308142], Sitao Wang [1003695151]
@@ -22,7 +22,7 @@ The application will utilize **React Native** with **Expo** as its development f
    - **Technical Approach:** Use core components like View, Text, Button, TextInput, etc. to manage POI creation/update. The category can be selected from a dropdown picker, preferably a tag-based picker, or fetched from Google Places if time permits. The location can be input as text or selected using the current location feature through Expo Location, or by utilizing a small map picker depending on the time.
 
 3. **Screen Navigation:**
-   - **Feature:** There are primarily four types of screens: the signup/login screen, the home screen, the add/update screen, and the details screen. When not logged in, the navigation flow is (signup) -> login -> home. After logging in, the flow changes to home -> add/edit -> home or home -> details.
+   - **Feature:** There are primarily four types of screens: the Signup/Login Screen, the Home Screen, the Add/Edit screen, and the Details Screen. When not logged in, the navigation flow is (Signup) <--> Login --> Home. After logging in, the flow changes to Home <--> Add/Edit <--> Home or Home <--> Details.
    - **Technical Approach:** Use Expo Router for file-based routing. All screens are organized using stack navigatior, and the back button functionality is supported. The folder structure will be organized as follows:
       ```plaintext
       app/
@@ -43,15 +43,15 @@ The application will utilize **React Native** with **Expo** as its development f
    - **Technical Approach:** Utilize the Context API for global state management throughout the app, enabling shared access to authentication and POI data across multiple screens. User authentication and data are synchronized with Supabase to maintain consistency between the client and the backend. Points of interest, along with lightweight UI states, are stored locally using React Native Async Storage to retain state.
    - **Screen Design Drafts**
 
-      ![signup screen](https://github.com/nichi1114/local-guide/blob/main/proposal/signup_screen.png?raw=true)
-      ![login screen](https://github.com/nichi1114/local-guide/blob/main/proposal/login_screen.png?raw=true)
+      ![Signup Screen](https://github.com/nichi1114/local-guide/blob/main/proposal/signup_screen.png?raw=true)
+      ![Login Screen](https://github.com/nichi1114/local-guide/blob/main/proposal/login_screen.png?raw=true)
 
-      ![home screen](https://github.com/nichi1114/local-guide/blob/main/proposal/home_screen.png?raw=true)
-      ![add/update screen](https://github.com/nichi1114/local-guide/blob/main/proposal/add_update_screen.png?raw=true)
-      ![details screen](https://github.com/nichi1114/local-guide/blob/main/proposal/details_screen.png?raw=true)
+      ![Home Screen](https://github.com/nichi1114/local-guide/blob/main/proposal/home_screen.png?raw=true)
+      ![Add/Edit Screen](https://github.com/nichi1114/local-guide/blob/main/proposal/add_update_screen.png?raw=true)
+      ![Details Screen](https://github.com/nichi1114/local-guide/blob/main/proposal/details_screen.png?raw=true)
 
 5. **Notifications:**
-   - **Feature:** Send a local notification at a scheduled time, either daily or weekly, to remind users to visit places and add points of interest. Tapping the notification takes users to the home screen.
+   - **Feature:** Send a local notification at a scheduled time, either daily or weekly, to remind users to visit places and add points of interest. Tapping the notification takes users to the Home Screen.
    - **Technical Approach:** Utilize Expo Notifications and Permissions to set a trigger for a specific time, such as 9 a.m. every day.
 
 6. **Backend Integration:**
@@ -60,10 +60,10 @@ The application will utilize **React Native** with **Expo** as its development f
 
 7. **Deployment:**  
    - **Feature:** Build and deploy the app.
-   - **Technical Approach:** Set Up Expo EAS Build, Configure Supabase keys and app metadata, and build the app for iOS or Android platform.
+   - **Technical Approach:** Set Up Expo EAS Build, configure Supabase keys and app metadata, and build the app for iOS or Android platform.
 
 8. **Expo Location to show nearby places**
-   - **Feature:** Users should see an enabled "Use Current Location" button that allows them to set their current location as the POI's location when adding or updating. This feature is available if they allow location access on their device. If time permits, a location filter tool could be implemented to show only places near the current location, and this tool could be added to the home screen.
+   - **Feature:** Users should see an enabled "Use Current Location" button that allows them to set their current location as the POI's location when adding or updating. This feature is available if they allow location access on their device. If time permits, a location filter tool could be implemented to show only places near the current location, and this tool could be added to the Home Screen.
    - **Technical Approach:** Use Expo Location to request users' permission and poll their current location (GPS coordinates).
 
 9. **Use Expo Camera to capture photos of places (Optional):**
@@ -77,17 +77,69 @@ The timeline below is generally planned, but it is highly possible to get adjust
 
 **Week 1: Setup & User Authentication**
 
+Yiduo:
+   - Set up GitHub repo.
+   - Initialize the Expo project and configure Expo Router with folder structure.
+   - Integrate Supabase client.
+   - Implement Signup & Login UI screens using Supabase Auth (email/password).
+   - If time allows, implement OAuth provider.
+
+Sitao:
+   - Set up Supabase project: Create users and places tables.
+   - Configure Row-Level Security (RLS) and policies.
+   - Test basic CRUD via Supabase dashboard.
+   - Prepare mock data for development.
+   - Test navigation flow: (Signup) <--> Login --> Home.
 
 **Week 2: Points of Interest Management**
 
+Yiduo:
+   - Create Add/Edit Screen UI with form fields (name, category, location, description).
+   - Implement CRUD functions using Supabase client.
+   - Use Async Storage to cache POIs and UI elements.
 
-**Week 3:**
+Sitao:
+   - Build Home Screen to fetch and list user-specific POIs from Supabase.
+   - Implement Details Screen for selected POI.
+   - Set up Context API for shared state: authentication, POI data.
+   - Test navigation: home <--> Add/Edit <--> Details.
 
 
-**Weeks 4-4.5:**
+**Week 3: Location & Notification**
+
+Yiduo:
+   - Integrate Expo Notifications: Request permission and schedule daily reminder (e.g., 9 a.m.).
+   - Set up deep linking so tapping notification opens Home Screen.
+   - Handle errors/loading states.
+
+Sitao:
+   - Implement Expo Location: Request location permission.
+   - Add "Use Current Location" button on Add/Edit Screen.
+   - Store latitude & longitude in the Supabase places table.
+   - If time allows, begin implementing location-based filtering on Home Screen.
 
 
-**Weeks 4.5-5:**
-- Polish the UI for an improved user experience.
-- Write the final report.
-- Record a demo video showcasing the core features.
+**Weeks 4-4.5: UI Polish, Testing & Optional Camera Feature**
+
+Yiduo:
+   - Integrate Expo Camera (optional feature): Request permission and capture image.
+   - Store photo in Supabase Storage (or locally if short on time).
+   - Add optional photo preview in Add/Edit and Details screen.
+   - Test Supabase Storage uploads (if implemented).
+
+Sitao:
+   - Polish UI and navigation: responsive design and style consistency.
+   - Perform testing across Android/iOS simulators.
+   - Fix bugs and ensure state consistency.
+
+**Weeks 4.5-5: Deployment, Demo and Report**
+
+Yiduo:
+   - Prepare EAS Build setup for Android/iOS.
+   - Test deployed build on a real device.
+   - Write the final report.
+
+Sitao:
+   - Polish the UI for an improved user experience.
+   - Record the demo video showcasing all core features.
+   - Write the final report.
