@@ -47,7 +47,6 @@ The application will utilize **React Native** with **Expo** as its development f
       ![login screen](https://github.com/nichi1114/local-guide/blob/main/proposal/login_screen.png?raw=true)
 
       ![home screen](https://github.com/nichi1114/local-guide/blob/main/proposal/home_screen.png?raw=true)
-
       ![add/update screen](https://github.com/nichi1114/local-guide/blob/main/proposal/add_update_screen.png?raw=true)
       ![details screen](https://github.com/nichi1114/local-guide/blob/main/proposal/details_screen.png?raw=true)
 
