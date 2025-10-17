@@ -38,10 +38,7 @@ The application will utilize **React Native** with **Expo** as its development f
       components/
       ├── ...
       ```
-4. **State Management and Persistence:**
-   - **Feature:** Persist states such as Authentication, Points of Interest, and UI elements (e.g., theme).
-   - **Technical Approach:** Utilize the Context API for global state management throughout the app, enabling shared access to authentication and POI data across multiple screens. User authentication and data are synchronized with Supabase to maintain consistency between the client and the backend. Points of interest, along with lightweight UI states, are stored locally using React Native Async Storage to retain state.
-   - **Screen Design Drafts**
+    - **Screen Design Drafts**
 
       ![Signup Screen](https://github.com/nichi1114/local-guide/blob/main/proposal/signup_screen.png?raw=true)
       ![Login Screen](https://github.com/nichi1114/local-guide/blob/main/proposal/login_screen.png?raw=true)
@@ -49,6 +46,10 @@ The application will utilize **React Native** with **Expo** as its development f
       ![Home Screen](https://github.com/nichi1114/local-guide/blob/main/proposal/home_screen.png?raw=true)
       ![Add/Edit Screen](https://github.com/nichi1114/local-guide/blob/main/proposal/add_update_screen.png?raw=true)
       ![Details Screen](https://github.com/nichi1114/local-guide/blob/main/proposal/details_screen.png?raw=true)
+
+4. **State Management and Persistence:**
+   - **Feature:** Persist states such as Authentication, Points of Interest, and UI elements (e.g., theme).
+   - **Technical Approach:** Utilize the Context API for global state management throughout the app, enabling shared access to authentication and POI data across multiple screens. User authentication and data are synchronized with Supabase to maintain consistency between the client and the backend. Points of interest, along with lightweight UI states, are stored locally using React Native Async Storage to retain state.
 
 5. **Notifications:**
    - **Feature:** Send a local notification at a scheduled time, either daily or weekly, to remind users to visit places and add points of interest. Tapping the notification takes users to the Home Screen.
