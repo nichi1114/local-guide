@@ -132,7 +132,7 @@ Sitao:
    - Perform testing across Android/iOS simulators.
    - Fix bugs and ensure state consistency.
 
-**Weeks 4.5-5: Deployment, Demo and Report**
+**Weeks 4.5-5: Deployment, Demo & Report**
 
 Yiduo:
    - Prepare EAS Build setup for Android/iOS.
