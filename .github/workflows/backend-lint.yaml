@@ -1,0 +1,31 @@
+name: Rust Backend Checks
+
+on:
+  push:
+    paths:
+      - backend/**
+      - Cargo.toml
+      - Cargo.lock
+      - .github/workflows/backend-ci.yaml
+  pull_request:
+    paths:
+      - backend/**
+      - Cargo.toml
+      - Cargo.lock
+      - .github/workflows/backend-ci.yaml
+
+jobs:
+  lint-and-format:
+    runs-on: ubuntu-latest
+    env:
+      CARGO_TERM_COLOR: always
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install Rust toolchain
+        run: |
+          rustup update stable && rustup default stable
+          rustup component add clippy rustfmt
+      - name: cargo fmt
+        run: cargo fmt --all -- --check
+      - name: cargo clippy
+        run: cargo clippy --all-targets --all-features -- -D warnings
