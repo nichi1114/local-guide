@@ -9,7 +9,7 @@ use serde::Deserialize;
 use thiserror::Error;
 
 use crate::oauth_config::OAuthProviderConfig;
-use crate::repository::auth::{AuthRepository, IdentityProfile, UserRecord};
+use crate::repository::auth::{AuthRepository, AuthRepositoryError, IdentityProfile, UserRecord};
 
 #[derive(Clone)]
 pub struct AuthService {
@@ -30,8 +30,8 @@ pub struct AuthSession {
 
 #[derive(Debug, Error)]
 pub enum AuthError {
-    #[error("storage failure")]
-    Storage(#[source] anyhow::Error),
+    #[error("storage failure: {0}")]
+    Storage(#[from] AuthRepositoryError),
     #[error("failed to exchange authorization code")]
     TokenExchange(#[source] anyhow::Error),
     #[error("failed to fetch user info")]
@@ -102,7 +102,7 @@ impl AuthService {
                 avatar_url: profile.picture.as_deref(),
             })
             .await
-            .map_err(AuthError::Storage)?;
+            .map_err(AuthError::from)?;
 
         Ok(AuthSession {
             user,

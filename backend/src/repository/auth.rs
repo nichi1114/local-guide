@@ -1,6 +1,14 @@
-use anyhow::Result;
 use sqlx::{Error as SqlxError, FromRow, PgPool, Postgres, Transaction};
+use thiserror::Error;
 use uuid::Uuid;
+
+#[derive(Debug, Error)]
+pub enum AuthRepositoryError {
+    #[error("database error: {0}")]
+    Database(#[from] SqlxError),
+}
+
+type RepoResult<T> = Result<T, AuthRepositoryError>;
 
 #[derive(Clone)]
 pub struct AuthRepository {
@@ -32,7 +40,7 @@ impl AuthRepository {
     pub async fn upsert_user_with_identity(
         &self,
         payload: IdentityProfile<'_>,
-    ) -> Result<UserRecord> {
+    ) -> RepoResult<UserRecord> {
         let mut tx = self.pool.begin().await?;
 
         if let Some(existing) = self
@@ -56,36 +64,32 @@ impl AuthRepository {
             .insert_user_tx(&mut tx, payload.email, payload.name, payload.avatar_url)
             .await?;
 
-        if let Err(err) = self
+        match self
             .insert_identity_tx(&mut tx, payload.provider, payload.provider_user_id, user.id)
             .await
         {
-            match err.downcast::<SqlxError>() {
-                Ok(SqlxError::Database(db_err)) if db_err.is_unique_violation() => {
-                    sqlx::query("DELETE FROM users WHERE id = $1")
-                        .bind(user.id)
-                        .execute(tx.as_mut())
-                        .await?;
-
-                    let existing = self
-                        .find_user_by_identity_tx(
-                            &mut tx,
-                            payload.provider,
-                            payload.provider_user_id,
-                        )
-                        .await?
-                        .expect("identity must exist after unique violation");
-
-                    tx.commit().await?;
-                    return Ok(existing);
-                }
-                Ok(other) => return Err(other.into()),
-                Err(other) => return Err(other),
+            Ok(_) => {
+                tx.commit().await?;
+                Ok(user)
             }
-        }
+            Err(AuthRepositoryError::Database(SqlxError::Database(db_err)))
+                if db_err.is_unique_violation() =>
+            {
+                sqlx::query("DELETE FROM users WHERE id = $1")
+                    .bind(user.id)
+                    .execute(tx.as_mut())
+                    .await?;
 
-        tx.commit().await?;
-        Ok(user)
+                let existing = self
+                    .find_user_by_identity_tx(&mut tx, payload.provider, payload.provider_user_id)
+                    .await?
+                    .expect("identity must exist after unique violation");
+
+                tx.commit().await?;
+                Ok(existing)
+            }
+            Err(err) => Err(err),
+        }
     }
 
     async fn insert_user_tx(
@@ -94,7 +98,7 @@ impl AuthRepository {
         email: Option<&str>,
         name: Option<&str>,
         avatar_url: Option<&str>,
-    ) -> Result<UserRecord> {
+    ) -> RepoResult<UserRecord> {
         let id = Uuid::new_v4();
         let user = sqlx::query_as::<_, UserRecord>(
             r#"
@@ -120,7 +124,7 @@ impl AuthRepository {
         email: Option<&str>,
         name: Option<&str>,
         avatar_url: Option<&str>,
-    ) -> Result<UserRecord> {
+    ) -> RepoResult<UserRecord> {
         let user = sqlx::query_as::<_, UserRecord>(
             r#"
             UPDATE users
@@ -148,7 +152,7 @@ impl AuthRepository {
         provider: &str,
         provider_user_id: &str,
         user_id: Uuid,
-    ) -> Result<()> {
+    ) -> RepoResult<()> {
         sqlx::query(
             r#"
             INSERT INTO oauth_identities (id, provider, provider_user_id, user_id)
@@ -170,7 +174,7 @@ impl AuthRepository {
         tx: &mut Transaction<'_, Postgres>,
         provider: &str,
         provider_user_id: &str,
-    ) -> Result<Option<UserRecord>> {
+    ) -> RepoResult<Option<UserRecord>> {
         let record = sqlx::query_as::<_, UserRecord>(
             r#"
             SELECT u.id, u.email, u.name, u.avatar_url
