@@ -110,7 +110,7 @@ fn map_auth_error(error: AuthError) -> (StatusCode, Json<ErrorResponse>) {
 impl From<AuthSession> for LoginResponse {
     fn from(value: AuthSession) -> Self {
         Self {
-            user: UserResponse::from(value.user.clone()),
+            user: UserResponse::from(value.user),
             access_token: value.access_token,
             refresh_token: value.refresh_token,
             expires_in: value.expires_in,

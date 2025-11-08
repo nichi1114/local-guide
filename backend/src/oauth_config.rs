@@ -22,11 +22,11 @@ impl OAuthProviderConfig {
 
     fn google_from_env() -> Result<Self> {
         let client_id = std::env::var("GOOGLE_CLIENT_ID")
-            .context("missing GOOGLE_CLIENT_ID environment variable")?;
+            .context("GOOGLE_CLIENT_ID environment variable is required for Google OAuth integration")?;
         let client_secret = std::env::var("GOOGLE_CLIENT_SECRET")
-            .context("missing GOOGLE_CLIENT_SECRET environment variable")?;
+            .context("GOOGLE_CLIENT_SECRET environment variable is required for Google OAuth integration")?;
         let redirect_uri = std::env::var("GOOGLE_REDIRECT_URI")
-            .context("missing GOOGLE_REDIRECT_URI environment variable")?;
+            .context("GOOGLE_REDIRECT_URI environment variable is required for Google OAuth integration")?;
 
         let auth_url = std::env::var("GOOGLE_AUTH_URL")
             .unwrap_or_else(|_| DEFAULT_GOOGLE_AUTH_URL.to_string());

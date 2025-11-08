@@ -45,9 +45,13 @@ async fn run() -> anyhow::Result<()> {
     let pool = db::create_pool(&database_url)
         .await
         .context("failed to create database pool")?;
-    sql_init::run_initialization(&pool)
-        .await
-        .context("failed to run initialization SQL")?;
+    // Only run SQL initialization if RUN_SQL_INIT is set to "true".
+    // This is intended for development or CI environments only.
+    if std::env::var("RUN_SQL_INIT").map(|v| v == "true").unwrap_or(false) {
+        sql_init::run_initialization(&pool)
+            .await
+            .context("failed to run initialization SQL")?;
+    }
 
     let repository = AuthRepository::new(pool.clone());
     let provider_configs = OAuthProviderConfig::load_from_env()
