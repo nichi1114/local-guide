@@ -75,17 +75,12 @@ impl AuthRepository {
             Err(AuthRepositoryError::Database(SqlxError::Database(db_err)))
                 if db_err.is_unique_violation() =>
             {
-                sqlx::query("DELETE FROM users WHERE id = $1")
-                    .bind(user.id)
-                    .execute(tx.as_mut())
-                    .await?;
-
+                tx.rollback().await?;
                 let existing = self
-                    .find_user_by_identity_tx(&mut tx, payload.provider, payload.provider_user_id)
+                    .find_user_by_identity(payload.provider, payload.provider_user_id)
                     .await?
                     .expect("identity must exist after unique violation");
 
-                tx.commit().await?;
                 Ok(existing)
             }
             Err(err) => Err(err),
@@ -186,6 +181,27 @@ impl AuthRepository {
         .bind(provider)
         .bind(provider_user_id)
         .fetch_optional(tx.as_mut())
+        .await?;
+
+        Ok(record)
+    }
+
+    async fn find_user_by_identity(
+        &self,
+        provider: &str,
+        provider_user_id: &str,
+    ) -> RepoResult<Option<UserRecord>> {
+        let record = sqlx::query_as::<_, UserRecord>(
+            r#"
+            SELECT u.id, u.email, u.name, u.avatar_url
+            FROM oauth_identities oi
+            JOIN users u ON u.id = oi.user_id
+            WHERE oi.provider = $1 AND oi.provider_user_id = $2
+            "#,
+        )
+        .bind(provider)
+        .bind(provider_user_id)
+        .fetch_optional(&self.pool)
         .await?;
 
         Ok(record)
