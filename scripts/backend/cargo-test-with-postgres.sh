@@ -30,4 +30,7 @@ export DATABASE_URL
 export TEST_DATABASE_URL="$DATABASE_URL"
 
 echo "Running cargo test with DATABASE_URL=$DATABASE_URL"
+# Run tests in a single thread to avoid database conflicts between tests.
+# If you improve test isolation (e.g., by using separate databases per thread or transaction rollbacks),
+# you can remove --test-threads=1 to speed up test execution.
 cargo test -- --test-threads=1 "$@"
