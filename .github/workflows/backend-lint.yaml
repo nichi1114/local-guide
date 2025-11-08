@@ -6,13 +6,13 @@ on:
       - backend/**
       - Cargo.toml
       - Cargo.lock
-      - .github/workflows/backend-ci.yaml
+      - .github/workflows/backend-lint.yaml
   pull_request:
     paths:
       - backend/**
       - Cargo.toml
       - Cargo.lock
-      - .github/workflows/backend-ci.yaml
+      - .github/workflows/backend-lint.yaml
 
 jobs:
   lint-and-format:
