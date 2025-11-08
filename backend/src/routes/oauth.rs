@@ -14,7 +14,7 @@ use crate::repository::auth::UserRecord;
 
 pub fn router(state: AppState) -> Router {
     Router::new()
-        .route("/auth/:provider/exchange", post(exchange_code))
+        .route("/auth/:provider/callback", post(complete_callback))
         .with_state(state)
 }
 
@@ -51,7 +51,7 @@ struct ErrorResponse {
     message: String,
 }
 
-async fn exchange_code(
+async fn complete_callback(
     State(state): State<AppState>,
     Path(path): Path<ProviderPath>,
     Json(payload): Json<ExchangeRequest>,
@@ -61,7 +61,7 @@ async fn exchange_code(
     };
 
     let session = service
-        .exchange_code(&payload.code, &payload.code_verifier)
+        .complete_oauth_flow(&payload.code, &payload.code_verifier)
         .await
         .map_err(map_auth_error)?;
 

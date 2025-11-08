@@ -66,7 +66,7 @@ impl AuthService {
         })
     }
 
-    pub async fn exchange_code(
+    pub async fn complete_oauth_flow(
         &self,
         code: &str,
         code_verifier: &str,
@@ -220,7 +220,7 @@ mod tests {
             .await;
 
         let session = service
-            .exchange_code("test-code", "test-verifier")
+            .complete_oauth_flow("test-code", "test-verifier")
             .await
             .expect("exchange code");
 
@@ -265,7 +265,7 @@ mod tests {
             .await;
 
         service
-            .exchange_code("code-1", "verifier-1")
+            .complete_oauth_flow("code-1", "verifier-1")
             .await
             .expect("first exchange succeeds");
 
@@ -297,7 +297,7 @@ mod tests {
             .await;
 
         let session = service
-            .exchange_code("code-2", "verifier-2")
+            .complete_oauth_flow("code-2", "verifier-2")
             .await
             .expect("second exchange succeeds");
 
