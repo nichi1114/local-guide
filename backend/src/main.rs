@@ -47,7 +47,10 @@ async fn run() -> anyhow::Result<()> {
         .context("failed to create database pool")?;
     // Only run SQL initialization if RUN_SQL_INIT is set to "true".
     // This is intended for development or CI environments only.
-    if std::env::var("RUN_SQL_INIT").map(|v| v == "true").unwrap_or(false) {
+    if std::env::var("RUN_SQL_INIT")
+        .map(|v| v == "true")
+        .unwrap_or(false)
+    {
         sql_init::run_initialization(&pool)
             .await
             .context("failed to run initialization SQL")?;

@@ -4,7 +4,14 @@ use sqlx::PgPool;
 pub async fn run_initialization(pool: &PgPool) -> Result<()> {
     let script = include_str!("../sql/init.sql");
 
-    // Execute the entire script at once to avoid splitting on semicolons inside strings.
-    sqlx::query(script).execute(pool).await?;
+    for statement in script.split(';') {
+        let trimmed = statement.trim();
+        if trimmed.is_empty() {
+            continue;
+        }
+
+        sqlx::query(trimmed).execute(pool).await?;
+    }
+
     Ok(())
 }
