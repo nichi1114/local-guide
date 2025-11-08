@@ -1,5 +1,5 @@
 use anyhow::Result;
-use sqlx::{FromRow, PgPool, Postgres, Transaction};
+use sqlx::{Error as SqlxError, FromRow, PgPool, Postgres, Transaction};
 use uuid::Uuid;
 
 #[derive(Clone)]
@@ -35,18 +35,9 @@ impl AuthRepository {
     ) -> Result<UserRecord> {
         let mut tx = self.pool.begin().await?;
 
-        if let Some(existing) = sqlx::query_as::<_, UserRecord>(
-            r#"
-            SELECT u.id, u.email, u.name, u.avatar_url
-            FROM oauth_identities oi
-            JOIN users u ON u.id = oi.user_id
-            WHERE oi.provider = $1 AND oi.provider_user_id = $2
-            "#,
-        )
-        .bind(payload.provider)
-        .bind(payload.provider_user_id)
-        .fetch_optional(tx.as_mut())
-        .await?
+        if let Some(existing) = self
+            .find_user_by_identity_tx(&mut tx, payload.provider, payload.provider_user_id)
+            .await?
         {
             let user = self
                 .update_user_profile_tx(
@@ -65,8 +56,33 @@ impl AuthRepository {
             .insert_user_tx(&mut tx, payload.email, payload.name, payload.avatar_url)
             .await?;
 
-        self.insert_identity_tx(&mut tx, payload.provider, payload.provider_user_id, user.id)
-            .await?;
+        if let Err(err) = self
+            .insert_identity_tx(&mut tx, payload.provider, payload.provider_user_id, user.id)
+            .await
+        {
+            match err.downcast::<SqlxError>() {
+                Ok(SqlxError::Database(db_err)) if db_err.is_unique_violation() => {
+                    sqlx::query("DELETE FROM users WHERE id = $1")
+                        .bind(user.id)
+                        .execute(tx.as_mut())
+                        .await?;
+
+                    let existing = self
+                        .find_user_by_identity_tx(
+                            &mut tx,
+                            payload.provider,
+                            payload.provider_user_id,
+                        )
+                        .await?
+                        .expect("identity must exist after unique violation");
+
+                    tx.commit().await?;
+                    return Ok(existing);
+                }
+                Ok(other) => return Err(other.into()),
+                Err(other) => return Err(other),
+            }
+        }
 
         tx.commit().await?;
         Ok(user)
@@ -137,7 +153,6 @@ impl AuthRepository {
             r#"
             INSERT INTO oauth_identities (id, provider, provider_user_id, user_id)
             VALUES ($1, $2, $3, $4)
-            ON CONFLICT (provider, provider_user_id) DO NOTHING
             "#,
         )
         .bind(Uuid::new_v4())
@@ -148,5 +163,27 @@ impl AuthRepository {
         .await?;
 
         Ok(())
+    }
+
+    async fn find_user_by_identity_tx(
+        &self,
+        tx: &mut Transaction<'_, Postgres>,
+        provider: &str,
+        provider_user_id: &str,
+    ) -> Result<Option<UserRecord>> {
+        let record = sqlx::query_as::<_, UserRecord>(
+            r#"
+            SELECT u.id, u.email, u.name, u.avatar_url
+            FROM oauth_identities oi
+            JOIN users u ON u.id = oi.user_id
+            WHERE oi.provider = $1 AND oi.provider_user_id = $2
+            "#,
+        )
+        .bind(provider)
+        .bind(provider_user_id)
+        .fetch_optional(tx.as_mut())
+        .await?;
+
+        Ok(record)
     }
 }
