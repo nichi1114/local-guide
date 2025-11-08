@@ -1,4 +1,5 @@
-use anyhow::{Context, Result};
+use std::env;
+use thiserror::Error;
 
 const DEFAULT_GOOGLE_AUTH_URL: &str = "https://accounts.google.com/o/oauth2/v2/auth";
 const DEFAULT_GOOGLE_TOKEN_URL: &str = "https://oauth2.googleapis.com/token";
@@ -15,31 +16,30 @@ pub struct OAuthProviderConfig {
     pub redirect_uri: String,
 }
 
+#[derive(Debug, Error)]
+pub enum OAuthConfigError {
+    #[error("missing environment variable {0}")]
+    MissingEnv(&'static str),
+}
+
 impl OAuthProviderConfig {
-    pub fn load_from_env() -> Result<Vec<Self>> {
+    pub fn load_from_env() -> Result<Vec<Self>, OAuthConfigError> {
         Ok(vec![Self::google_from_env()?])
     }
 
-    fn google_from_env() -> Result<Self> {
-        let client_id = std::env::var("GOOGLE_CLIENT_ID").context(
-            "GOOGLE_CLIENT_ID environment variable is required for Google OAuth integration",
-        )?;
-        let client_secret = std::env::var("GOOGLE_CLIENT_SECRET").context(
-            "GOOGLE_CLIENT_SECRET environment variable is required for Google OAuth integration",
-        )?;
-        let redirect_uri = std::env::var("GOOGLE_REDIRECT_URI").context(
-            "GOOGLE_REDIRECT_URI environment variable is required for Google OAuth integration",
-        )?;
+    fn google_from_env() -> Result<Self, OAuthConfigError> {
+        let client_id = env_var("GOOGLE_CLIENT_ID")?;
+        let client_secret = env_var("GOOGLE_CLIENT_SECRET")?;
+        let redirect_uri = env_var("GOOGLE_REDIRECT_URI")?;
 
-        let auth_url = std::env::var("GOOGLE_AUTH_URL")
-            .unwrap_or_else(|_| DEFAULT_GOOGLE_AUTH_URL.to_string());
-        let token_url = std::env::var("GOOGLE_TOKEN_URL")
-            .unwrap_or_else(|_| DEFAULT_GOOGLE_TOKEN_URL.to_string());
-        let userinfo_url = std::env::var("GOOGLE_USERINFO_URL")
+        let auth_url =
+            env::var("GOOGLE_AUTH_URL").unwrap_or_else(|_| DEFAULT_GOOGLE_AUTH_URL.to_string());
+        let token_url =
+            env::var("GOOGLE_TOKEN_URL").unwrap_or_else(|_| DEFAULT_GOOGLE_TOKEN_URL.to_string());
+        let userinfo_url = env::var("GOOGLE_USERINFO_URL")
             .unwrap_or_else(|_| DEFAULT_GOOGLE_USERINFO_URL.to_string());
 
-        let provider_id =
-            std::env::var("GOOGLE_PROVIDER_NAME").unwrap_or_else(|_| "google".to_string());
+        let provider_id = env::var("GOOGLE_PROVIDER_NAME").unwrap_or_else(|_| "google".to_string());
 
         Ok(Self {
             provider_id,
@@ -51,4 +51,8 @@ impl OAuthProviderConfig {
             redirect_uri,
         })
     }
+}
+
+fn env_var(key: &'static str) -> Result<String, OAuthConfigError> {
+    env::var(key).map_err(|_| OAuthConfigError::MissingEnv(key))
 }

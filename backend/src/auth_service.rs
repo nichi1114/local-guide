@@ -1,4 +1,3 @@
-use anyhow::{Context, Result};
 use oauth2::reqwest::async_http_client;
 use oauth2::{
     basic::BasicClient, AuthUrl, AuthorizationCode, ClientId, ClientSecret, PkceCodeVerifier,
@@ -32,19 +31,37 @@ pub struct AuthSession {
 pub enum AuthError {
     #[error("storage failure: {0}")]
     Storage(#[from] AuthRepositoryError),
-    #[error("failed to exchange authorization code")]
-    TokenExchange(#[source] anyhow::Error),
-    #[error("failed to fetch user info")]
-    UserInfo(#[source] anyhow::Error),
+    #[error("failed to exchange authorization code: {0}")]
+    TokenExchange(String),
+    #[error("failed to fetch user info: {0}")]
+    UserInfo(String),
+}
+
+#[derive(Debug, Error)]
+pub enum AuthServiceBuildError {
+    #[error("invalid authorization url: {0}")]
+    InvalidAuthUrl(String),
+    #[error("invalid token url: {0}")]
+    InvalidTokenUrl(String),
+    #[error("invalid redirect url: {0}")]
+    InvalidRedirectUrl(String),
+    #[error("invalid userinfo url: {0}")]
+    InvalidUserInfoUrl(String),
+    #[error("failed to build HTTP client: {0}")]
+    HttpClient(#[from] reqwest::Error),
 }
 
 impl AuthService {
-    pub fn new(repository: AuthRepository, config: OAuthProviderConfig) -> Result<Self> {
-        let auth_url =
-            AuthUrl::new(config.auth_url.clone()).context("invalid authorization url")?;
-        let token_url = TokenUrl::new(config.token_url.clone()).context("invalid token url")?;
-        let redirect_url =
-            RedirectUrl::new(config.redirect_uri.clone()).context("invalid redirect url")?;
+    pub fn new(
+        repository: AuthRepository,
+        config: OAuthProviderConfig,
+    ) -> Result<Self, AuthServiceBuildError> {
+        let auth_url = AuthUrl::new(config.auth_url.clone())
+            .map_err(|err| AuthServiceBuildError::InvalidAuthUrl(err.to_string()))?;
+        let token_url = TokenUrl::new(config.token_url.clone())
+            .map_err(|err| AuthServiceBuildError::InvalidTokenUrl(err.to_string()))?;
+        let redirect_url = RedirectUrl::new(config.redirect_uri.clone())
+            .map_err(|err| AuthServiceBuildError::InvalidRedirectUrl(err.to_string()))?;
 
         let client = BasicClient::new(
             ClientId::new(config.client_id.clone()),
@@ -54,7 +71,8 @@ impl AuthService {
         )
         .set_redirect_uri(redirect_url);
 
-        let userinfo_url = Url::parse(&config.userinfo_url).context("invalid userinfo url")?;
+        let userinfo_url = Url::parse(&config.userinfo_url)
+            .map_err(|err| AuthServiceBuildError::InvalidUserInfoUrl(err.to_string()))?;
         let http_client = reqwest::Client::builder().build()?;
 
         Ok(Self {
@@ -77,7 +95,7 @@ impl AuthService {
             .set_pkce_verifier(PkceCodeVerifier::new(code_verifier.to_owned()))
             .request_async(async_http_client)
             .await
-            .map_err(|error| AuthError::TokenExchange(error.into()))?;
+            .map_err(|error| AuthError::TokenExchange(error.to_string()))?;
 
         let access_token = token_response.access_token().secret().to_owned();
         let refresh_token = token_response
@@ -87,10 +105,7 @@ impl AuthService {
             .expires_in()
             .map(|duration| duration.as_secs());
 
-        let profile = self
-            .fetch_user_info(&access_token)
-            .await
-            .map_err(AuthError::UserInfo)?;
+        let profile = self.fetch_user_info(&access_token).await?;
 
         let user = self
             .repository
@@ -101,8 +116,7 @@ impl AuthService {
                 name: profile.name.as_deref(),
                 avatar_url: profile.picture.as_deref(),
             })
-            .await
-            .map_err(AuthError::from)?;
+            .await?;
 
         Ok(AuthSession {
             user,
@@ -112,21 +126,22 @@ impl AuthService {
         })
     }
 
-    async fn fetch_user_info(&self, access_token: &str) -> Result<ProviderUserInfo> {
+    async fn fetch_user_info(&self, access_token: &str) -> Result<ProviderUserInfo, AuthError> {
         let response = self
             .http_client
             .get(self.userinfo_url.clone())
             .bearer_auth(access_token)
             .send()
             .await
-            .context("failed to send user info request")?
+            .map_err(|err| AuthError::UserInfo(format!("failed to send user info request: {err}")))?
             .error_for_status()
-            .context("userinfo endpoint returned error")?;
+            .map_err(|err| {
+                AuthError::UserInfo(format!("userinfo endpoint returned error: {err}"))
+            })?;
 
-        let profile = response
-            .json::<ProviderUserInfo>()
-            .await
-            .context("failed to decode user info response")?;
+        let profile = response.json::<ProviderUserInfo>().await.map_err(|err| {
+            AuthError::UserInfo(format!("failed to decode user info response: {err}"))
+        })?;
 
         Ok(profile)
     }
