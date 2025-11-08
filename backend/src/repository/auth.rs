@@ -109,20 +109,12 @@ impl AuthRepository {
                 .await?;
         }
 
-        let user = if user_id == new_user_id {
-            UserRecord {
-                id: user_id,
-                email: payload.email.map(|s| s.to_string()),
-                name: payload.name.map(|s| s.to_string()),
-                avatar_url: payload.avatar_url.map(|s| s.to_string()),
-            }
-        } else {
-            self.find_user_by_id(user_id)
-                .await?
-                .expect("user must exist after upsert")
-        };
-
         tx.commit().await?;
+
+        let user = self
+            .find_user_by_id(user_id)
+            .await?
+            .expect("user must exist after upsert");
 
         Ok(user)
     }
