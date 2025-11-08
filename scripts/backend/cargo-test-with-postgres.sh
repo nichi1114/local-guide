@@ -30,4 +30,4 @@ export DATABASE_URL
 export TEST_DATABASE_URL="$DATABASE_URL"
 
 echo "Running cargo test with DATABASE_URL=$DATABASE_URL"
-cargo test "$@"
+cargo test -- --test-threads=1 "$@"

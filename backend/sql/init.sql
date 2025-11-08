@@ -27,3 +27,7 @@ CREATE TABLE IF NOT EXISTS oauth_identities (
 
 -- Index to optimize lookups of OAuth identities by user_id
 CREATE INDEX IF NOT EXISTS oauth_identities_user_idx ON oauth_identities (user_id);
+
+-- Ensure uniqueness even if the table was created previously without the constraint.
+CREATE UNIQUE INDEX IF NOT EXISTS oauth_identities_provider_user_idx
+    ON oauth_identities (provider, provider_user_id);
