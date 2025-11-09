@@ -1,7 +1,7 @@
 use std::sync::Arc;
 
 use chrono::{Duration, Utc};
-use jsonwebtoken::{decode, encode, DecodingKey, EncodingKey, Header, Validation};
+use jsonwebtoken::{decode, encode, Algorithm, DecodingKey, EncodingKey, Header, Validation};
 use serde::{Deserialize, Serialize};
 use thiserror::Error;
 use uuid::Uuid;
@@ -40,6 +40,7 @@ impl JwtManager {
     pub fn verify(&self, token: &str) -> Result<JwtClaims, JwtError> {
         let mut validation = Validation::default();
         validation.validate_exp = true;
+        validation.algorithms = vec![Algorithm::HS256];
 
         decode::<JwtClaims>(token, &self.decoding_key(), &validation)
             .map(|data| data.claims)
