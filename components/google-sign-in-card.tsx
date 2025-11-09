@@ -8,13 +8,19 @@ export function GoogleSignInCard() {
   const { signInWithGoogle, error, isLoading, session, ready, hasValidToken } =
     useGoogleAuthSession();
 
-  const jwtHealthy = hasValidToken;
+  const sessionExpired = Boolean(session && !hasValidToken);
+  const hasActiveSession = Boolean(session && hasValidToken);
+  const errorMessage = sessionExpired
+    ? 'Session expired. Please sign in again.'
+    : error
+      ? 'Sign-in failed. Please try again.'
+      : null;
 
   return (
     <ThemedView style={styles.card}>
       <ThemedText type="subtitle">Sign in with Google</ThemedText>
       <ThemedText style={styles.description}>
-        Use your Google account to finish the PKCE flow and let the backend mint a JWT.
+        Use your Google account to sign in securely and continue using the app.
       </ThemedText>
       <Pressable
         onPress={() => signInWithGoogle()}
@@ -30,22 +36,16 @@ export function GoogleSignInCard() {
           <Text style={styles.buttonLabel}>Continue with Google</Text>
         )}
       </Pressable>
-      {error ? (
+      {errorMessage ? (
         <Text style={styles.error} testID="google-auth-error">
-          {error}
+          {errorMessage}
         </Text>
       ) : null}
-      {session ? (
+      {hasActiveSession ? (
         <View style={styles.sessionBox}>
           <ThemedText type="defaultSemiBold">
             Signed in as {session.user.email ?? 'unknown'}
           </ThemedText>
-          <Text style={styles.jwtLabel} numberOfLines={2}>
-            JWT: {session.jwt_token}
-          </Text>
-          <Text style={[styles.jwtLabel, jwtHealthy ? styles.valid : styles.invalid]}>
-            {jwtHealthy ? 'JWT is active' : 'JWT missing or expired'}
-          </Text>
         </View>
       ) : null}
     </ThemedView>
@@ -88,15 +88,5 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     padding: 12,
     gap: 4,
-  },
-  jwtLabel: {
-    fontSize: 12,
-    color: '#666',
-  },
-  valid: {
-    color: '#1a8a34',
-  },
-  invalid: {
-    color: '#d93025',
   },
 });
