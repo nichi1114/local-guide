@@ -48,7 +48,7 @@ export function useGoogleAuthSession() {
   const signInWithGoogle = useCallback(async () => {
     if (!GOOGLE_CLIENT_ID) {
       setError(
-        'Missing Google client ID. Provide EXPO_PUBLIC_GOOGLE_CLIENT_ID or expo.extra.googleClientId.'
+        'Missing Google client ID. Provide LOCAL_GUIDE_CLIENT_ID or expo.extra.localGuideClientId.'
       );
       return null;
     }
