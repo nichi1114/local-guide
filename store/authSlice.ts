@@ -21,6 +21,7 @@ export const hydrateAuthSession = createAsyncThunk('auth/hydrate', async () => {
     return parsed;
   } catch (error) {
     console.warn('Failed to parse persisted session', error);
+    await SecureStore.deleteItemAsync(STORAGE_KEY);
     return null;
   }
 });
