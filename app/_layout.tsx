@@ -85,7 +85,7 @@ function AuthGate({ children }: { children: ReactNode }) {
   if (isHydrating) {
     return (
       <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}>
-        <ActivityIndicator />
+        <ActivityIndicator accessibilityLabel="Loading authentication status" />
       </View>
     );
   }

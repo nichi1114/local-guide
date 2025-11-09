@@ -31,7 +31,7 @@ export function GoogleSignInCard() {
           pressed && styles.buttonPressed,
         ]}>
         {isLoading ? (
-          <ActivityIndicator color="#fff" />
+          <ActivityIndicator color="#fff" accessibilityLabel="Signing in with Google" />
         ) : (
           <Text style={styles.buttonLabel}>Continue with Google</Text>
         )}
