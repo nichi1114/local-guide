@@ -101,7 +101,7 @@ fn map_jwt_error(error: JwtError) -> (StatusCode, Json<ErrorResponse>) {
         StatusCode::INTERNAL_SERVER_ERROR,
         Json(ErrorResponse::new(
             "jwt_error",
-            "failed to create session token",
+            "failed to generate JWT token",
         )),
     )
 }
