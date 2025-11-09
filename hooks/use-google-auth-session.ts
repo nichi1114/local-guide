@@ -4,8 +4,10 @@ import * as AuthSession from 'expo-auth-session';
 import * as WebBrowser from 'expo-web-browser';
 
 import { API_BASE_URL, GOOGLE_CLIENT_ID } from '@/constants/env';
-import { useAuth } from '@/contexts/auth-context';
 import type { BackendLoginResponse } from '@/types/auth';
+import { useAppDispatch, useAppSelector } from '@/store/hooks';
+import { selectAuthSession, selectHasValidToken } from '@/store/authSelectors';
+import { persistAuthSession } from '@/store/authSlice';
 
 WebBrowser.maybeCompleteAuthSession();
 
@@ -20,7 +22,9 @@ const redirectUri = AuthSession.makeRedirectUri({
 });
 
 export function useGoogleAuthSession() {
-  const { saveSession, session, hasValidToken } = useAuth();
+  const dispatch = useAppDispatch();
+  const session = useAppSelector(selectAuthSession);
+  const hasValidToken = useAppSelector(selectHasValidToken);
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
 
@@ -98,7 +102,7 @@ export function useGoogleAuthSession() {
       }
 
       const payload = (await response.json()) as BackendLoginResponse;
-      await saveSession(payload);
+      await dispatch(persistAuthSession(payload)).unwrap();
       return payload;
     } catch (authError) {
       const message =
@@ -108,7 +112,7 @@ export function useGoogleAuthSession() {
     } finally {
       setIsLoading(false);
     }
-  }, [promptAsync, request, saveSession]);
+  }, [dispatch, promptAsync, request]);
 
   return {
     signInWithGoogle,

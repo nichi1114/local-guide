@@ -4,14 +4,16 @@ import { useEffect } from 'react';
 import { useRouter } from 'expo-router';
 
 import { GoogleSignInCard } from '@/components/google-sign-in-card';
-import { useAuth } from '@/contexts/auth-context';
+import { useAppSelector } from '@/store/hooks';
+import { selectHasValidToken, selectIsHydratingAuth } from '@/store/authSelectors';
 
 export default function LoginScreen() {
-  const { hasValidToken, isHydrating } = useAuth();
+  const hasValidToken = useAppSelector(selectHasValidToken);
+  const isHydrating = useAppSelector(selectIsHydratingAuth);
   const router = useRouter();
 
   useEffect(() => {
-    if (!isHydrating && hasValidToken()) {
+    if (!isHydrating && hasValidToken) {
       router.replace('/');
     }
   }, [hasValidToken, isHydrating, router]);

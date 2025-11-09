@@ -8,7 +8,7 @@ export function GoogleSignInCard() {
   const { signInWithGoogle, error, isLoading, session, ready, hasValidToken } =
     useGoogleAuthSession();
 
-  const jwtHealthy = hasValidToken();
+  const jwtHealthy = hasValidToken;
 
   return (
     <ThemedView style={styles.card}>
