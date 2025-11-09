@@ -23,6 +23,9 @@ export function GoogleSignInCard() {
         Use your Google account to sign in securely and continue using the app.
       </ThemedText>
       <Pressable
+        accessibilityRole="button"
+        accessibilityLabel="Sign in with Google"
+        accessibilityState={{ disabled: !ready || isLoading }}
         onPress={() => signInWithGoogle()}
         disabled={!ready || isLoading}
         style={({ pressed }) => [
