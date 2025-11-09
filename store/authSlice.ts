@@ -2,6 +2,7 @@ import * as SecureStore from 'expo-secure-store';
 import { createAsyncThunk, createSlice } from '@reduxjs/toolkit';
 
 import type { BackendLoginResponse } from '@/types/auth';
+import { isJwtValid } from '@/utils/jwt';
 
 const STORAGE_KEY = 'local-guide:auth-session';
 
@@ -12,7 +13,12 @@ export const hydrateAuthSession = createAsyncThunk('auth/hydrate', async () => {
   }
 
   try {
-    return JSON.parse(raw) as BackendLoginResponse;
+    const parsed = JSON.parse(raw) as BackendLoginResponse;
+    if (!isJwtValid(parsed.jwt_token)) {
+      await SecureStore.deleteItemAsync(STORAGE_KEY);
+      return null;
+    }
+    return parsed;
   } catch (error) {
     console.warn('Failed to parse persisted session', error);
     return null;
