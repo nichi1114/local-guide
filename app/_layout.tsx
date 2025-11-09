@@ -60,25 +60,26 @@ function AuthGate({ children }: { children: ReactNode }) {
       return;
     }
 
-    if (pendingRouteRef.current) {
-      return;
-    }
-
     const needsLogin = !hasValidToken;
     const isOnLogin = pathname === '/login';
 
-    if (needsLogin) {
-      if (!isOnLogin) {
-        pendingRouteRef.current = '/login';
-        router.replace('/login');
-      }
+    let targetRoute: string | null = null;
+    if (needsLogin && !isOnLogin) {
+      targetRoute = '/login';
+    } else if (!needsLogin && isOnLogin) {
+      targetRoute = '/';
+    }
+
+    if (!targetRoute) {
       return;
     }
 
-    if (isOnLogin) {
-      pendingRouteRef.current = '/';
-      router.replace('/');
+    if (pendingRouteRef.current && pendingRouteRef.current === targetRoute) {
+      return;
     }
+
+    pendingRouteRef.current = targetRoute;
+    router.replace(targetRoute);
   }, [hasValidToken, isHydrating, pathname, router]);
 
   if (isHydrating) {
