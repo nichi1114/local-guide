@@ -66,7 +66,6 @@ function AuthGate({ children }: { children: ReactNode }) {
 
     const needsLogin = !hasValidToken;
     const isOnLogin = pathname === '/login';
-    const isOnHome = pathname === '/' || pathname?.startsWith('/(tabs)');
 
     if (needsLogin) {
       if (!isOnLogin) {
@@ -79,9 +78,6 @@ function AuthGate({ children }: { children: ReactNode }) {
     if (isOnLogin) {
       pendingRouteRef.current = '/';
       router.replace('/');
-    } else if (!isOnHome && pathname) {
-      // User is logged in and navigating elsewhere; allow it.
-      pendingRouteRef.current = null;
     }
   }, [hasValidToken, isHydrating, pathname, router]);
 
