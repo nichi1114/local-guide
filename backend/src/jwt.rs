@@ -34,8 +34,7 @@ impl JwtManager {
             exp: (issued_at + self.expiration).timestamp(),
         };
 
-        encode(&Header::default(), &claims, &self.encoding_key())
-            .map_err(JwtError::EncodeFailed)
+        encode(&Header::default(), &claims, &self.encoding_key()).map_err(JwtError::EncodeFailed)
     }
 
     pub fn verify(&self, token: &str) -> Result<JwtClaims, JwtError> {

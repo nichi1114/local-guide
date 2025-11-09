@@ -20,13 +20,10 @@ pub async fn jwt_auth(
     let token = extract_token(req.headers())
         .ok_or_else(|| unauthorized("missing Authorization bearer token"))?;
 
-    let claims = state
-        .jwt_manager()
-        .verify(token)
-        .map_err(|error| {
-            error!(?error, "failed to verify JWT");
-            unauthorized("invalid or expired token")
-        })?;
+    let claims = state.jwt_manager().verify(token).map_err(|error| {
+        error!(?error, "failed to verify JWT");
+        unauthorized("invalid or expired token")
+    })?;
 
     req.extensions_mut().insert(claims);
 

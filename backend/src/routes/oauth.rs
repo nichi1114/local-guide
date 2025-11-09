@@ -46,16 +46,14 @@ async fn complete_callback(
     let Some(service) = state.auth_service(&path.provider) else {
         return Err(provider_not_configured(&path.provider));
     };
+    let jwt_manager = state.jwt_manager();
 
     let user = service
         .complete_oauth_flow(&payload.code, &payload.code_verifier)
         .await
         .map_err(map_auth_error)?;
 
-    let jwt_token = state
-        .jwt_manager()
-        .generate(&user)
-        .map_err(map_jwt_error)?;
+    let jwt_token = jwt_manager.generate(&user).map_err(map_jwt_error)?;
 
     Ok(Json(LoginResponse::from_user(user, jwt_token)))
 }
@@ -256,8 +254,8 @@ mod tests {
             redirect_uri: "https://example.com/callback".to_string(),
         };
 
-        let service =
-            AuthService::new(repository.clone(), config).expect("initialize auth service for tests");
+        let service = AuthService::new(repository.clone(), config)
+            .expect("initialize auth service for tests");
 
         let mut providers = HashMap::new();
         providers.insert("google".to_string(), service);

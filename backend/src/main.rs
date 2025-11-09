@@ -8,17 +8,17 @@ use tokio::net::TcpListener;
 mod app_state;
 mod auth_service;
 mod db;
+mod jwt;
 mod oauth_config;
 mod repository;
 mod routes;
 mod sql_init;
-mod jwt;
 
 use app_state::AppState;
 use auth_service::{AuthService, AuthServiceBuildError};
+use jwt::JwtManager;
 use oauth_config::{OAuthConfigError, OAuthProviderConfig};
 use repository::auth::AuthRepository;
-use jwt::JwtManager;
 use sqlx::Error as SqlxError;
 
 const DEFAULT_ADDR: &str = "0.0.0.0:8080";
@@ -71,13 +71,11 @@ async fn run() -> Result<(), BackendError> {
         return Err(BackendError::NoProviders);
     }
 
-    let jwt_secret =
-        std::env::var("JWT_SECRET").map_err(|_| BackendError::MissingJwtSecret)?;
-    let jwt_ttl_seconds =
-        match std::env::var("JWT_TTL_SECONDS") {
-            Ok(value) => value.parse::<u64>().map_err(BackendError::InvalidJwtTtl)?,
-            Err(_) => DEFAULT_JWT_TTL_SECONDS,
-        };
+    let jwt_secret = std::env::var("JWT_SECRET").map_err(|_| BackendError::MissingJwtSecret)?;
+    let jwt_ttl_seconds = match std::env::var("JWT_TTL_SECONDS") {
+        Ok(value) => value.parse::<u64>().map_err(BackendError::InvalidJwtTtl)?,
+        Err(_) => DEFAULT_JWT_TTL_SECONDS,
+    };
 
     let jwt_manager = JwtManager::new(jwt_secret, jwt_ttl_seconds);
 

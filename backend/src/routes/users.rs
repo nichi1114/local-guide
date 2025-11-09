@@ -17,10 +17,7 @@ pub fn router(state: AppState) -> Router {
     let middleware_state = state.clone();
     Router::new()
         .route("/usr", get(current_user))
-        .route_layer(middleware::from_fn_with_state(
-            middleware_state,
-            jwt_auth,
-        ))
+        .route_layer(middleware::from_fn_with_state(middleware_state, jwt_auth))
         .with_state(state)
 }
 
@@ -51,7 +48,10 @@ fn user_not_found() -> (StatusCode, Json<ErrorResponse>) {
 fn internal_error() -> (StatusCode, Json<ErrorResponse>) {
     (
         StatusCode::INTERNAL_SERVER_ERROR,
-        Json(ErrorResponse::new("internal_error", "unexpected server error")),
+        Json(ErrorResponse::new(
+            "internal_error",
+            "unexpected server error",
+        )),
     )
 }
 
@@ -113,9 +113,7 @@ mod tests {
         assert_eq!(response.status(), StatusCode::UNAUTHORIZED);
     }
 
-    async fn build_app(
-        repository: AuthRepository,
-    ) -> (Router, JwtManager, UserRecord) {
+    async fn build_app(repository: AuthRepository) -> (Router, JwtManager, UserRecord) {
         let jwt = JwtManager::new(TEST_JWT_SECRET.to_string(), 3600);
 
         let user = repository
