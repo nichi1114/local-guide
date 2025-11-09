@@ -6,11 +6,13 @@ use axum::{
 };
 use serde::{Deserialize, Serialize};
 use tracing::error;
-use uuid::Uuid;
 
 use crate::app_state::AppState;
-use crate::auth_service::{AuthError, AuthSession};
+use crate::auth_service::AuthError;
+use crate::jwt::JwtError;
 use crate::repository::auth::UserRecord;
+
+use super::models::{ErrorResponse, UserResponse};
 
 pub fn router(state: AppState) -> Router {
     Router::new()
@@ -33,24 +35,7 @@ struct ExchangeRequest {
 #[derive(Serialize)]
 struct LoginResponse {
     user: UserResponse,
-    access_token: String,
-    refresh_token: Option<String>,
-    expires_in: Option<u64>,
-}
-
-#[cfg_attr(test, derive(Deserialize))]
-#[derive(Serialize)]
-struct UserResponse {
-    id: Uuid,
-    email: Option<String>,
-    name: Option<String>,
-    avatar_url: Option<String>,
-}
-
-#[derive(Serialize)]
-struct ErrorResponse {
-    error: &'static str,
-    message: String,
+    jwt_token: String,
 }
 
 async fn complete_callback(
@@ -61,22 +46,25 @@ async fn complete_callback(
     let Some(service) = state.auth_service(&path.provider) else {
         return Err(provider_not_configured(&path.provider));
     };
+    let jwt_manager = state.jwt_manager();
 
-    let session = service
+    let user = service
         .complete_oauth_flow(&payload.code, &payload.code_verifier)
         .await
         .map_err(map_auth_error)?;
 
-    Ok(Json(LoginResponse::from(session)))
+    let jwt_token = jwt_manager.generate(&user).map_err(map_jwt_error)?;
+
+    Ok(Json(LoginResponse::from_user(user, jwt_token)))
 }
 
 fn provider_not_configured(provider: &str) -> (StatusCode, Json<ErrorResponse>) {
     (
         StatusCode::NOT_FOUND,
-        Json(ErrorResponse {
-            error: "provider_not_configured",
-            message: format!("provider '{provider}' is not configured"),
-        }),
+        Json(ErrorResponse::new(
+            "provider_not_configured",
+            format!("provider '{provider}' is not configured"),
+        )),
     )
 }
 
@@ -85,46 +73,44 @@ fn map_auth_error(error: AuthError) -> (StatusCode, Json<ErrorResponse>) {
     match error {
         AuthError::TokenExchange(_) => (
             StatusCode::BAD_GATEWAY,
-            Json(ErrorResponse {
-                error: "token_exchange_failed",
-                message: "failed to exchange authorization code with provider".to_string(),
-            }),
+            Json(ErrorResponse::new(
+                "token_exchange_failed",
+                "failed to exchange authorization code with provider",
+            )),
         ),
         AuthError::UserInfo(_) => (
             StatusCode::BAD_GATEWAY,
-            Json(ErrorResponse {
-                error: "userinfo_failed",
-                message: "failed to fetch user information from provider".to_string(),
-            }),
+            Json(ErrorResponse::new(
+                "userinfo_failed",
+                "failed to fetch user information from provider",
+            )),
         ),
         AuthError::Storage(_) => (
             StatusCode::INTERNAL_SERVER_ERROR,
-            Json(ErrorResponse {
-                error: "storage_error",
-                message: "unexpected storage error".to_string(),
-            }),
+            Json(ErrorResponse::new(
+                "storage_error",
+                "unexpected storage error",
+            )),
         ),
     }
 }
 
-impl From<AuthSession> for LoginResponse {
-    fn from(value: AuthSession) -> Self {
-        Self {
-            user: UserResponse::from(value.user),
-            access_token: value.access_token,
-            refresh_token: value.refresh_token,
-            expires_in: value.expires_in,
-        }
-    }
+fn map_jwt_error(error: JwtError) -> (StatusCode, Json<ErrorResponse>) {
+    error!(?error, "failed to generate JWT");
+    (
+        StatusCode::INTERNAL_SERVER_ERROR,
+        Json(ErrorResponse::new(
+            "jwt_error",
+            "failed to generate JWT token",
+        )),
+    )
 }
 
-impl From<UserRecord> for UserResponse {
-    fn from(value: UserRecord) -> Self {
+impl LoginResponse {
+    fn from_user(user: UserRecord, jwt_token: String) -> Self {
         Self {
-            id: value.id,
-            email: value.email,
-            name: value.name,
-            avatar_url: value.avatar_url,
+            user: UserResponse::from(user),
+            jwt_token,
         }
     }
 }
@@ -135,6 +121,7 @@ mod tests {
     use crate::app_state::AppState;
     use crate::auth_service::AuthService;
     use crate::db::create_pool;
+    use crate::jwt::JwtManager;
     use crate::oauth_config::OAuthProviderConfig;
     use crate::repository::auth::AuthRepository;
     use crate::sql_init::run_initialization;
@@ -147,6 +134,8 @@ mod tests {
     use tower::ServiceExt;
     use wiremock::matchers::{header, method, path};
     use wiremock::{Mock, MockServer, ResponseTemplate};
+
+    const TEST_JWT_SECRET: &str = "jwt-test-secret";
 
     #[tokio::test]
     async fn callback_creates_user_and_returns_profile() {
@@ -208,7 +197,15 @@ mod tests {
 
         assert_eq!(parsed.user.email.as_deref(), Some("user@example.com"));
         assert_eq!(parsed.user.name.as_deref(), Some("Test User"));
-        assert_eq!(parsed.refresh_token.as_deref(), Some("mock-refresh-token"));
+        assert!(
+            !parsed.jwt_token.is_empty(),
+            "jwt token should be present in response"
+        );
+
+        let jwt = JwtManager::new(TEST_JWT_SECRET.to_string(), 3600);
+        let claims = jwt.verify(&parsed.jwt_token).expect("valid jwt");
+        assert_eq!(claims.email.as_deref(), Some("user@example.com"));
+        assert_eq!(claims.name.as_deref(), Some("Test User"));
 
         let stored_email: Option<String> = sqlx::query_scalar("SELECT email FROM users LIMIT 1")
             .fetch_one(&pool)
@@ -257,11 +254,15 @@ mod tests {
             redirect_uri: "https://example.com/callback".to_string(),
         };
 
-        let service =
-            AuthService::new(repository, config).expect("initialize auth service for tests");
+        let service = AuthService::new(repository.clone(), config)
+            .expect("initialize auth service for tests");
 
         let mut providers = HashMap::new();
         providers.insert("google".to_string(), service);
-        AppState::new(providers)
+        AppState::new(
+            providers,
+            JwtManager::new(TEST_JWT_SECRET.to_string(), 3600),
+            repository,
+        )
     }
 }

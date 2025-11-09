@@ -1,4 +1,5 @@
 use std::collections::HashMap;
+use std::num::ParseIntError;
 
 use axum::Router;
 use thiserror::Error;
@@ -7,6 +8,7 @@ use tokio::net::TcpListener;
 mod app_state;
 mod auth_service;
 mod db;
+mod jwt;
 mod oauth_config;
 mod repository;
 mod routes;
@@ -14,12 +16,14 @@ mod sql_init;
 
 use app_state::AppState;
 use auth_service::{AuthService, AuthServiceBuildError};
+use jwt::JwtManager;
 use oauth_config::{OAuthConfigError, OAuthProviderConfig};
 use repository::auth::AuthRepository;
 use sqlx::Error as SqlxError;
 
 const DEFAULT_ADDR: &str = "0.0.0.0:8080";
 const DEFAULT_DATABASE_URL: &str = "postgres://postgres:postgres@localhost:5432/local_guide";
+const DEFAULT_JWT_TTL_SECONDS: u64 = 3600;
 
 #[tokio::main]
 async fn main() -> Result<(), BackendError> {
@@ -67,7 +71,15 @@ async fn run() -> Result<(), BackendError> {
         return Err(BackendError::NoProviders);
     }
 
-    let state = AppState::new(providers);
+    let jwt_secret = std::env::var("JWT_SECRET").map_err(|_| BackendError::MissingJwtSecret)?;
+    let jwt_ttl_seconds = match std::env::var("JWT_TTL_SECONDS") {
+        Ok(value) => value.parse::<u64>().map_err(BackendError::InvalidJwtTtl)?,
+        Err(_) => DEFAULT_JWT_TTL_SECONDS,
+    };
+
+    let jwt_manager = JwtManager::new(jwt_secret, jwt_ttl_seconds);
+
+    let state = AppState::new(providers, jwt_manager, repository);
 
     let app = build_router(state);
 
@@ -99,4 +111,8 @@ enum BackendError {
     Server(#[from] axum::Error),
     #[error("no OAuth providers configured")]
     NoProviders,
+    #[error("JWT_SECRET environment variable must be set")]
+    MissingJwtSecret,
+    #[error("invalid JWT_TTL_SECONDS value: {0}")]
+    InvalidJwtTtl(#[from] ParseIntError),
 }

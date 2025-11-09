@@ -170,7 +170,7 @@ impl AuthRepository {
         Ok(record)
     }
 
-    async fn find_user_by_id(&self, user_id: Uuid) -> RepoResult<Option<UserRecord>> {
+    pub async fn find_user_by_id(&self, user_id: Uuid) -> RepoResult<Option<UserRecord>> {
         let record = sqlx::query_as::<_, UserRecord>(
             r#"
             SELECT id, email, name, avatar_url
