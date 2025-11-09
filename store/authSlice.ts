@@ -1,4 +1,4 @@
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import * as SecureStore from 'expo-secure-store';
 import { createAsyncThunk, createSlice } from '@reduxjs/toolkit';
 
 import type { BackendLoginResponse } from '@/types/auth';
@@ -6,7 +6,7 @@ import type { BackendLoginResponse } from '@/types/auth';
 const STORAGE_KEY = 'local-guide:auth-session';
 
 export const hydrateAuthSession = createAsyncThunk('auth/hydrate', async () => {
-  const raw = await AsyncStorage.getItem(STORAGE_KEY);
+  const raw = await SecureStore.getItemAsync(STORAGE_KEY);
   if (!raw) {
     return null;
   }
@@ -22,13 +22,13 @@ export const hydrateAuthSession = createAsyncThunk('auth/hydrate', async () => {
 export const persistAuthSession = createAsyncThunk(
   'auth/persist',
   async (session: BackendLoginResponse) => {
-    await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(session));
+    await SecureStore.setItemAsync(STORAGE_KEY, JSON.stringify(session));
     return session;
   }
 );
 
 export const clearAuthSession = createAsyncThunk('auth/clear', async () => {
-  await AsyncStorage.removeItem(STORAGE_KEY);
+  await SecureStore.deleteItemAsync(STORAGE_KEY);
   return null;
 });
 

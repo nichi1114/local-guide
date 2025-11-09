@@ -3,7 +3,7 @@ import { Stack, usePathname, useRouter } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import 'react-native-reanimated';
 import { ActivityIndicator, View } from 'react-native';
-import { type ReactNode, useEffect } from 'react';
+import { type ReactNode, useEffect, useRef } from 'react';
 import { Provider } from 'react-redux';
 
 import { useColorScheme } from '@/hooks/use-color-scheme';
@@ -43,20 +43,45 @@ function AuthGate({ children }: { children: ReactNode }) {
   const hasValidToken = useAppSelector(selectHasValidToken);
   const router = useRouter();
   const pathname = usePathname();
+  const pendingRouteRef = useRef<string | null>(null);
 
   useEffect(() => {
     dispatch(hydrateAuthSession());
   }, [dispatch]);
 
   useEffect(() => {
+    if (pendingRouteRef.current && pathname === pendingRouteRef.current) {
+      pendingRouteRef.current = null;
+    }
+  }, [pathname]);
+
+  useEffect(() => {
     if (isHydrating) {
       return;
     }
 
-    if (!hasValidToken && pathname !== '/login') {
-      router.replace('/login');
-    } else if (hasValidToken && pathname === '/login') {
+    if (pendingRouteRef.current) {
+      return;
+    }
+
+    const needsLogin = !hasValidToken;
+    const isOnLogin = pathname === '/login';
+    const isOnHome = pathname === '/' || pathname?.startsWith('/(tabs)');
+
+    if (needsLogin) {
+      if (!isOnLogin) {
+        pendingRouteRef.current = '/login';
+        router.replace('/login');
+      }
+      return;
+    }
+
+    if (isOnLogin) {
+      pendingRouteRef.current = '/';
       router.replace('/');
+    } else if (!isOnHome && pathname) {
+      // User is logged in and navigating elsewhere; allow it.
+      pendingRouteRef.current = null;
     }
   }, [hasValidToken, isHydrating, pathname, router]);
 
