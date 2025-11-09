@@ -19,14 +19,6 @@ pub struct AuthService {
     provider_id: String,
 }
 
-#[derive(Debug, Clone)]
-pub struct AuthSession {
-    pub user: UserRecord,
-    pub access_token: String,
-    pub refresh_token: Option<String>,
-    pub expires_in: Option<u64>,
-}
-
 #[derive(Debug, Error)]
 pub enum AuthError {
     #[error("storage failure: {0}")]
@@ -88,7 +80,7 @@ impl AuthService {
         &self,
         code: &str,
         code_verifier: &str,
-    ) -> Result<AuthSession, AuthError> {
+    ) -> Result<UserRecord, AuthError> {
         let token_response = self
             .client
             .exchange_code(AuthorizationCode::new(code.to_owned()))
@@ -98,13 +90,6 @@ impl AuthService {
             .map_err(|error| AuthError::TokenExchange(error.to_string()))?;
 
         let access_token = token_response.access_token().secret().to_owned();
-        let refresh_token = token_response
-            .refresh_token()
-            .map(|value| value.secret().to_owned());
-        let expires_in = token_response
-            .expires_in()
-            .map(|duration| duration.as_secs());
-
         let profile = self.fetch_user_info(&access_token).await?;
 
         let user = self
@@ -118,12 +103,7 @@ impl AuthService {
             })
             .await?;
 
-        Ok(AuthSession {
-            user,
-            access_token,
-            refresh_token,
-            expires_in,
-        })
+        Ok(user)
     }
 
     async fn fetch_user_info(&self, access_token: &str) -> Result<ProviderUserInfo, AuthError> {
@@ -234,16 +214,13 @@ mod tests {
             .mount(&mock_server)
             .await;
 
-        let session = service
+        let user = service
             .complete_oauth_flow("test-code", "test-verifier")
             .await
             .expect("exchange code");
 
-        assert_eq!(session.access_token, "mock-access-token");
-        assert_eq!(session.refresh_token.as_deref(), Some("mock-refresh-token"));
-        assert_eq!(session.expires_in, Some(3600));
-        assert_eq!(session.user.email.as_deref(), Some("user@example.com"));
-        assert_eq!(session.user.name.as_deref(), Some("Test User"));
+        assert_eq!(user.email.as_deref(), Some("user@example.com"));
+        assert_eq!(user.name.as_deref(), Some("Test User"));
     }
 
     #[tokio::test]
@@ -311,14 +288,14 @@ mod tests {
             .mount(&mock_server)
             .await;
 
-        let session = service
+        let user = service
             .complete_oauth_flow("code-2", "verifier-2")
             .await
             .expect("second exchange succeeds");
 
-        assert_eq!(session.user.name.as_deref(), Some("Updated Name"));
+        assert_eq!(user.name.as_deref(), Some("Updated Name"));
         assert_eq!(
-            session.user.avatar_url.as_deref(),
+            user.avatar_url.as_deref(),
             Some("https://example.com/avatar.png")
         );
     }
