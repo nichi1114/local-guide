@@ -5,7 +5,10 @@ import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 
 export function GoogleSignInCard() {
-  const { signInWithGoogle, error, isLoading, session, ready } = useGoogleAuthSession();
+  const { signInWithGoogle, error, isLoading, session, ready, hasValidToken } =
+    useGoogleAuthSession();
+
+  const jwtHealthy = hasValidToken();
 
   return (
     <ThemedView style={styles.card}>
@@ -34,9 +37,14 @@ export function GoogleSignInCard() {
       ) : null}
       {session ? (
         <View style={styles.sessionBox}>
-          <ThemedText type="defaultSemiBold">Signed in as {session.user.email ?? 'unknown'}</ThemedText>
+          <ThemedText type="defaultSemiBold">
+            Signed in as {session.user.email ?? 'unknown'}
+          </ThemedText>
           <Text style={styles.jwtLabel} numberOfLines={2}>
             JWT: {session.jwt_token}
+          </Text>
+          <Text style={[styles.jwtLabel, jwtHealthy ? styles.valid : styles.invalid]}>
+            {jwtHealthy ? 'JWT is active' : 'JWT missing or expired'}
           </Text>
         </View>
       ) : null}
@@ -84,5 +92,11 @@ const styles = StyleSheet.create({
   jwtLabel: {
     fontSize: 12,
     color: '#666',
+  },
+  valid: {
+    color: '#1a8a34',
+  },
+  invalid: {
+    color: '#d93025',
   },
 });
