@@ -1,13 +1,28 @@
-use anyhow::Context;
+use std::collections::HashMap;
+
 use axum::Router;
+use thiserror::Error;
 use tokio::net::TcpListener;
 
+mod app_state;
+mod auth_service;
+mod db;
+mod oauth_config;
+mod repository;
 mod routes;
+mod sql_init;
+
+use app_state::AppState;
+use auth_service::{AuthService, AuthServiceBuildError};
+use oauth_config::{OAuthConfigError, OAuthProviderConfig};
+use repository::auth::AuthRepository;
+use sqlx::Error as SqlxError;
 
 const DEFAULT_ADDR: &str = "0.0.0.0:8080";
+const DEFAULT_DATABASE_URL: &str = "postgres://postgres:postgres@localhost:5432/local_guide";
 
 #[tokio::main]
-async fn main() -> anyhow::Result<()> {
+async fn main() -> Result<(), BackendError> {
     init_tracing();
     run().await
 }
@@ -25,23 +40,63 @@ fn init_tracing() {
         .init();
 }
 
-async fn run() -> anyhow::Result<()> {
-    let app = build_router();
+async fn run() -> Result<(), BackendError> {
+    let database_url =
+        std::env::var("DATABASE_URL").unwrap_or_else(|_| DEFAULT_DATABASE_URL.to_string());
+    let pool = db::create_pool(&database_url).await?;
+    // Only run SQL initialization if RUN_SQL_INIT is set to "true".
+    // This is intended for development or CI environments only.
+    if std::env::var("RUN_SQL_INIT")
+        .map(|v| v == "true")
+        .unwrap_or(false)
+    {
+        sql_init::run_initialization(&pool).await?;
+    }
 
-    let listener = TcpListener::bind(DEFAULT_ADDR)
-        .await
-        .with_context(|| format!("failed to bind to {DEFAULT_ADDR}"))?;
-    let address = listener
-        .local_addr()
-        .context("failed to read bound address")?;
+    let repository = AuthRepository::new(pool.clone());
+    let provider_configs = OAuthProviderConfig::load_from_env()?;
+
+    let mut providers = HashMap::new();
+    for config in provider_configs {
+        let provider_id = config.provider_id.clone();
+        let service = AuthService::new(repository.clone(), config)?;
+        providers.insert(provider_id, service);
+    }
+
+    if providers.is_empty() {
+        return Err(BackendError::NoProviders);
+    }
+
+    let state = AppState::new(providers);
+
+    let app = build_router(state);
+
+    let listener = TcpListener::bind(DEFAULT_ADDR).await?;
+    let address = listener.local_addr()?;
 
     tracing::info!(%address, "listening for requests");
 
-    axum::serve(listener, app).await.context("server failed")?;
+    axum::serve(listener, app).await?;
 
     Ok(())
 }
 
-fn build_router() -> Router {
-    routes::router()
+fn build_router(state: AppState) -> Router {
+    routes::router(state)
+}
+
+#[derive(Debug, Error)]
+enum BackendError {
+    #[error(transparent)]
+    Config(#[from] OAuthConfigError),
+    #[error(transparent)]
+    AuthInit(#[from] AuthServiceBuildError),
+    #[error(transparent)]
+    Sqlx(#[from] SqlxError),
+    #[error(transparent)]
+    Io(#[from] std::io::Error),
+    #[error(transparent)]
+    Server(#[from] axum::Error),
+    #[error("no OAuth providers configured")]
+    NoProviders,
 }

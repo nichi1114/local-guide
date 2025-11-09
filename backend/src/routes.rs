@@ -1,5 +1,9 @@
 use axum::Router;
 
-pub fn router() -> Router {
-    Router::new()
+use crate::app_state::AppState;
+
+mod oauth;
+
+pub fn router(state: AppState) -> Router {
+    oauth::router(state)
 }

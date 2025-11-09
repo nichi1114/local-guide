@@ -1,0 +1,45 @@
+name: Rust Backend Tests
+
+on:
+  push:
+    paths:
+      - backend/**
+      - Cargo.toml
+      - Cargo.lock
+      - .github/workflows/backend-tests.yaml
+  pull_request:
+    paths:
+      - backend/**
+      - Cargo.toml
+      - Cargo.lock
+      - .github/workflows/backend-tests.yaml
+
+jobs:
+  tests:
+    runs-on: ubuntu-latest
+    env:
+      CARGO_TERM_COLOR: always
+      DATABASE_URL: postgres://postgres:postgres@localhost:5432/local_guide_test
+      TEST_DATABASE_URL: postgres://postgres:postgres@localhost:5432/local_guide_test
+    services:
+      postgres:
+        image: postgres:15
+        env:
+          POSTGRES_DB: local_guide_test
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_USER: postgres
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres -d local_guide_test"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install Rust toolchain
+        run: |
+          rustup toolchain install stable --profile minimal
+          rustup default stable
+      - name: Run tests (sequential)
+        run: cargo test --all -- --test-threads=1
