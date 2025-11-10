@@ -100,7 +100,8 @@ export function useGoogleAuthSession() {
       );
 
       if (!response.ok) {
-        const detail = await safeParseError(response);
+        const errorPayload = await safeParseError(response);
+        const detail = errorPayload?.message ?? `Backend responded with ${response.status}.`;
         throw new Error(detail);
       }
 
