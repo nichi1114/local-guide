@@ -40,7 +40,11 @@ export function GoogleSignInCard() {
         )}
       </Pressable>
       {errorMessage ? (
-        <Text style={styles.error} testID="google-auth-error">
+        <Text
+          style={styles.error}
+          testID="google-auth-error"
+          accessibilityRole="alert"
+          accessibilityLiveRegion="polite">
           {errorMessage}
         </Text>
       ) : null}
