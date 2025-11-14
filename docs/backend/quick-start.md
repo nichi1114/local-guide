@@ -16,7 +16,7 @@ docker run --rm -p 5432:5432 \
   postgres:15
 ```
 
-- Once the server is accepting connections, apply the schema by running the `init_db.sql` file located at `backend/sql/init.sql`:
+- Once the server is accepting connections, apply the schema by running `backend/sql/init.sql`:
 
 ```sh
 psql -U postgres -d local_guide -f backend/sql/init.sql
