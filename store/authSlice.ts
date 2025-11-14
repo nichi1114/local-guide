@@ -29,8 +29,13 @@ export const hydrateAuthSession = createAsyncThunk("auth/hydrate", async () => {
 export const persistAuthSession = createAsyncThunk(
   "auth/persist",
   async (session: BackendLoginResponse) => {
-    await SecureStore.setItemAsync(STORAGE_KEY, JSON.stringify(session));
-    return session;
+    try {
+      await SecureStore.setItemAsync(STORAGE_KEY, JSON.stringify(session));
+      return session;
+    } catch (error) {
+      console.error("Failed to persist auth session", error);
+      throw error;
+    }
   },
 );
 
@@ -68,6 +73,9 @@ const authSlice = createSlice({
       })
       .addCase(persistAuthSession.fulfilled, (state, action) => {
         state.session = action.payload;
+      })
+      .addCase(persistAuthSession.rejected, (state) => {
+        state.session = null;
       })
       .addCase(clearAuthSession.fulfilled, (state) => {
         state.session = null;
