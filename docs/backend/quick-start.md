@@ -42,14 +42,22 @@ DATABASE_URL=postgres://postgres:postgres@localhost:5432/local_guide
 #TEST_DATABASE_URL=postgres://postgres:postgres@localhost:5432/local_guide_test
 JWT_SECRET=replace-with-a-random-secret
 JWT_TTL_SECONDS=3600
-GOOGLE_CLIENT_ID=<google-cloud-console-id>
-GOOGLE_CLIENT_SECRET=<google-cloud-console-secret>
-GOOGLE_REDIRECT_URI=https://your-website.com/auth/google/callback
-GOOGLE_PROVIDER_NAME=google
+# Google OAuth – iOS (required for iOS builds)
+GOOGLE_IOS_CLIENT_ID=<ios-google-client-id>
+GOOGLE_IOS_REDIRECT_URI=com.ece1778.localguide:/oauthredirect
+#GOOGLE_IOS_PROVIDER_NAME=google-ios
+# Google OAuth – Android (required for Android builds)
+GOOGLE_ANDROID_CLIENT_ID=<android-google-client-id>
+GOOGLE_ANDROID_REDIRECT_URI=com.ece1778.localguide:/oauthredirect
+#GOOGLE_ANDROID_PROVIDER_NAME=google-android
+# Optional provider override
+#GOOGLE_PROVIDER_NAME=google
 #GOOGLE_AUTH_URL=https://accounts.google.com/o/oauth2/v2/auth
 #GOOGLE_TOKEN_URL=https://oauth2.googleapis.com/token
 #GOOGLE_USERINFO_URL=https://www.googleapis.com/oauth2/v3/userinfo
 ```
+
+The Expo client automatically hits `/auth/<provider>/callback`, where `<provider>` becomes `google-ios` or `google-android` (and `google` only if you also configure the shared web client), so be sure the backend has matching values for every platform you plan to support.
 
 `BACKEND_URL` should point to the public base URL (what the frontend uses), while `BACKEND_BIND_ADDR` controls which host/port the Axum server listens on. Leave `BACKEND_BIND_ADDR` unset to keep the default `0.0.0.0:8080`. Environment variables exported directly in your shell still override `.env`, which can be handy for short-lived overrides or CI.
 

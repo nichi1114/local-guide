@@ -1,7 +1,7 @@
 use oauth2::reqwest::async_http_client;
 use oauth2::{
-    basic::BasicClient, AuthUrl, AuthorizationCode, ClientId, ClientSecret, PkceCodeVerifier,
-    RedirectUrl, TokenResponse, TokenUrl,
+    basic::BasicClient, AuthUrl, AuthorizationCode, ClientId, PkceCodeVerifier, RedirectUrl,
+    TokenResponse, TokenUrl,
 };
 use reqwest::Url;
 use serde::Deserialize;
@@ -57,7 +57,7 @@ impl AuthService {
 
         let client = BasicClient::new(
             ClientId::new(config.client_id.clone()),
-            Some(ClientSecret::new(config.client_secret.clone())),
+            None,
             auth_url,
             Some(token_url),
         )

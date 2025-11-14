@@ -6,6 +6,7 @@ import * as WebBrowser from "expo-web-browser";
 import {
   API_BASE_URL,
   GOOGLE_CLIENT_ID,
+  GOOGLE_PROVIDER_ID,
   GOOGLE_REDIRECT_URI,
 } from "@/constants/env";
 import type { BackendLoginResponse } from "@/types/auth";
@@ -23,7 +24,7 @@ const discovery: AuthSession.DiscoveryDocument = {
 const redirectUri =
   GOOGLE_REDIRECT_URI ||
   AuthSession.makeRedirectUri({
-    scheme: "localguide",
+    scheme: "com.ece1778.localguide",
     preferLocalhost: true,
   });
 
@@ -54,7 +55,7 @@ export function useGoogleAuthSession() {
   const signInWithGoogle = useCallback(async () => {
     if (!GOOGLE_CLIENT_ID) {
       setError(
-        "Missing Google client ID. Provide GOOGLE_CLIENT_ID or expo.extra.googleClientId.",
+        "Missing Google client ID. Provide GOOGLE_CLIENT_ID/GOOGLE_IOS_CLIENT_ID/GOOGLE_ANDROID_CLIENT_ID or expo.extra Google client values.",
       );
       return null;
     }
@@ -91,7 +92,7 @@ export function useGoogleAuthSession() {
       }
 
       const response = await fetchWithTimeout(
-        `${API_BASE_URL}/auth/google/callback`,
+        `${API_BASE_URL}/auth/${GOOGLE_PROVIDER_ID}/callback`,
         {
           method: "POST",
           headers: {
