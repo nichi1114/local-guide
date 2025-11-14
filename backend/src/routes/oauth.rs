@@ -338,7 +338,6 @@ mod tests {
         let config = OAuthProviderConfig {
             provider_id: "google".to_string(),
             client_id: "client-id".to_string(),
-            client_secret: "client-secret".to_string(),
             auth_url: format!("{}/auth", mock_server.uri()),
             token_url: format!("{}/token", mock_server.uri()),
             userinfo_url: format!("{}/userinfo", mock_server.uri()),
