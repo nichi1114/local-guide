@@ -80,6 +80,9 @@ function AuthGate({ children }: { children: ReactNode }) {
 
     pendingRouteRef.current = targetRoute;
     router.replace(targetRoute);
+    return () => {
+      pendingRouteRef.current = null;
+    };
   }, [hasValidToken, isHydrating, pathname, router]);
 
   if (isHydrating) {
