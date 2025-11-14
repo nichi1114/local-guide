@@ -4,6 +4,7 @@ use std::num::ParseIntError;
 use axum::Router;
 use thiserror::Error;
 use tokio::net::TcpListener;
+use url::Url;
 
 mod app_state;
 mod auth_service;
@@ -27,6 +28,7 @@ const DEFAULT_JWT_TTL_SECONDS: u64 = 3600;
 
 #[tokio::main]
 async fn main() -> Result<(), BackendError> {
+    let _ = dotenvy::dotenv();
     init_tracing();
     run().await
 }
@@ -83,7 +85,8 @@ async fn run() -> Result<(), BackendError> {
 
     let app = build_router(state);
 
-    let listener = TcpListener::bind(DEFAULT_ADDR).await?;
+    let listen_addr = resolve_listen_addr()?;
+    let listener = TcpListener::bind(&listen_addr).await?;
     let address = listener.local_addr()?;
 
     tracing::info!(%address, "listening for requests");
@@ -95,6 +98,40 @@ async fn run() -> Result<(), BackendError> {
 
 fn build_router(state: AppState) -> Router {
     routes::router(state)
+}
+
+fn resolve_listen_addr() -> Result<String, BackendError> {
+    if let Ok(addr) = std::env::var("BACKEND_BIND_ADDR") {
+        if !addr.trim().is_empty() {
+            return Ok(addr);
+        }
+    }
+
+    if let Ok(url_value) = std::env::var("BACKEND_URL") {
+        return parse_backend_url(&url_value);
+    }
+
+    Ok(DEFAULT_ADDR.to_string())
+}
+
+fn parse_backend_url(value: &str) -> Result<String, BackendError> {
+    if value.contains("://") {
+        let parsed =
+            Url::parse(value).map_err(|_| BackendError::InvalidBackendUrl(value.to_string()))?;
+        let host = parsed
+            .host_str()
+            .ok_or_else(|| BackendError::InvalidBackendUrl(value.to_string()))?;
+        let port = parsed
+            .port_or_known_default()
+            .ok_or_else(|| BackendError::InvalidBackendUrl(value.to_string()))?;
+        return Ok(format!("{host}:{port}"));
+    }
+
+    if value.trim().is_empty() {
+        return Err(BackendError::InvalidBackendUrl(value.to_string()));
+    }
+
+    Ok(value.to_string())
 }
 
 #[derive(Debug, Error)]
@@ -115,4 +152,6 @@ enum BackendError {
     MissingJwtSecret,
     #[error("invalid JWT_TTL_SECONDS value: {0}")]
     InvalidJwtTtl(#[from] ParseIntError),
+    #[error("invalid BACKEND_URL value: {0}")]
+    InvalidBackendUrl(String),
 }

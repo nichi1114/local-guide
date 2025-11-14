@@ -31,26 +31,27 @@ psql -U postgres -d local_guide -f backend/sql/init.sql
 
 The script boots a disposable Docker container named `local-guide-postgres` and automatically feeds it the same `init_db.sql` schema.
 
-### 2. Export required environment variables
+### 2. Configure environment variables
 
-The backend refuses to start unless these variables are set in the current shell:
+Both the backend (Rust) service and the Expo frontend read configuration from a `.env` file at the repository root. Create that file manually (or via your preferred secrets manager) using the template below, then replace the placeholder values:
 
-```sh
-export DATABASE_URL=postgres://postgres:postgres@localhost:5432/local_guide
-export JWT_SECRET=<random-jwt-secret>
-# optional overrides
-export JWT_TTL_SECONDS=3600
-export GOOGLE_PROVIDER_NAME=google
-
-# Google OAuth configuration (all required)
-export GOOGLE_CLIENT_ID=<google-clould-console-id>
-export GOOGLE_CLIENT_SECRET=<google-count-console-secret>
-export GOOGLE_REDIRECT_URI=https://your-website.com/auth/google/callback
-# Optional overrides if using a non-default Google workspace / proxy
-export GOOGLE_AUTH_URL=...
-export GOOGLE_TOKEN_URL=...
-export GOOGLE_USERINFO_URL=...
+```env
+BACKEND_URL=http://localhost:8080
+#BACKEND_BIND_ADDR=0.0.0.0:8080
+DATABASE_URL=postgres://postgres:postgres@localhost:5432/local_guide
+#TEST_DATABASE_URL=postgres://postgres:postgres@localhost:5432/local_guide_test
+JWT_SECRET=replace-with-a-random-secret
+JWT_TTL_SECONDS=3600
+GOOGLE_CLIENT_ID=<google-cloud-console-id>
+GOOGLE_CLIENT_SECRET=<google-cloud-console-secret>
+GOOGLE_REDIRECT_URI=https://your-website.com/auth/google/callback
+GOOGLE_PROVIDER_NAME=google
+#GOOGLE_AUTH_URL=https://accounts.google.com/o/oauth2/v2/auth
+#GOOGLE_TOKEN_URL=https://oauth2.googleapis.com/token
+#GOOGLE_USERINFO_URL=https://www.googleapis.com/oauth2/v3/userinfo
 ```
+
+Environment variables exported directly in your shell still override `.env`, which can be handy for short-lived overrides or CI.
 
 ### 3. Start the backend
 
