@@ -116,7 +116,9 @@ export function useGoogleAuthSession() {
       await dispatch(persistAuthSession(payload)).unwrap();
       return payload;
     } catch (authError) {
-      if (authError instanceof DOMException && authError.name === "AbortError") {
+      const isAbortError =
+        authError instanceof Error && authError.name === "AbortError";
+      if (isAbortError) {
         setError("Sign-in timed out. Check your connection and try again.");
       } else {
         const message =
