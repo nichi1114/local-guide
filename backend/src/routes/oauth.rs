@@ -1,7 +1,7 @@
 use axum::{
-    extract::{Path, Query, State},
+    extract::{Path, State},
     http::StatusCode,
-    routing::get,
+    routing::post,
     Json, Router,
 };
 use serde::{Deserialize, Serialize};
@@ -16,10 +16,7 @@ use super::models::{ErrorResponse, UserResponse};
 
 pub fn router(state: AppState) -> Router {
     Router::new()
-        .route(
-            "/auth/:provider/callback",
-            get(handle_oauth_redirect).post(complete_callback),
-        )
+        .route("/auth/:provider/callback", post(complete_callback))
         .with_state(state)
 }
 
@@ -53,23 +50,6 @@ async fn complete_callback(
         payload.code_verifier.as_deref(),
     )
     .await
-}
-
-#[derive(Deserialize)]
-struct RedirectQuery {
-    code: String,
-    state: Option<String>,
-}
-
-async fn handle_oauth_redirect(
-    State(state): State<AppState>,
-    Path(path): Path<ProviderPath>,
-    Query(query): Query<RedirectQuery>,
-) -> Result<Json<LoginResponse>, (StatusCode, Json<ErrorResponse>)> {
-    if let Some(state_value) = &query.state {
-        tracing::debug!(state = state_value, "received oauth callback");
-    }
-    finish_login(state, path.provider, query.code, None).await
 }
 
 async fn finish_login(
