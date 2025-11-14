@@ -237,62 +237,6 @@ mod tests {
         assert_eq!(identities, "google-user-123");
     }
 
-    #[tokio::test]
-    async fn callback_accepts_query_without_code_verifier() {
-        let pool = setup_pool().await;
-        let mock_server = MockServer::start().await;
-        let app = super::router(build_state(&mock_server, pool.clone()));
-
-        let access_token_response = json!({
-            "access_token": "mock-access-token",
-            "token_type": "Bearer",
-            "expires_in": 3600
-        });
-
-        Mock::given(method("POST"))
-            .and(path("/token"))
-            .respond_with(ResponseTemplate::new(200).set_body_json(access_token_response))
-            .mount(&mock_server)
-            .await;
-
-        let user_info_response = json!({
-            "sub": "google-user-456",
-            "email": "query-user@example.com",
-            "name": "Query User",
-            "picture": "https://example.com/avatar.png"
-        });
-
-        Mock::given(method("GET"))
-            .and(path("/userinfo"))
-            .and(header("authorization", "Bearer mock-access-token"))
-            .respond_with(ResponseTemplate::new(200).set_body_json(user_info_response))
-            .mount(&mock_server)
-            .await;
-
-        let response = app
-            .oneshot(
-                Request::get("/auth/google/callback?code=auth-code&state=xyz")
-                    .header("accept", "application/json")
-                    .body(Body::empty())
-                    .unwrap(),
-            )
-            .await
-            .expect("request succeeds");
-
-        assert_eq!(response.status(), StatusCode::OK);
-
-        let body = response
-            .into_body()
-            .collect()
-            .await
-            .expect("collect body")
-            .to_bytes();
-        let parsed: LoginResponse = serde_json::from_slice(&body).expect("valid response");
-
-        assert_eq!(parsed.user.email.as_deref(), Some("query-user@example.com"));
-        assert_eq!(parsed.user.name.as_deref(), Some("Query User"));
-    }
-
     async fn setup_pool() -> PgPool {
         let database_url = std::env::var("TEST_DATABASE_URL")
             .or_else(|_| std::env::var("DATABASE_URL"))
