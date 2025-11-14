@@ -1,5 +1,6 @@
 import { ConfigContext, ExpoConfig } from 'expo/config';
-import 'dotenv/config';
+import * as dotenv from 'dotenv';
+dotenv.config();
 
 const APP_NAME = 'local-guide';
 const APP_IDENTIFIER = 'com.ece1778.localguide';

@@ -75,7 +75,7 @@ const authSlice = createSlice({
         state.session = action.payload;
       })
       .addCase(persistAuthSession.rejected, (state) => {
-        state.session = null;
+        // Do not clear session on persist failure; keep session in memory.
       })
       .addCase(clearAuthSession.fulfilled, (state) => {
         state.session = null;

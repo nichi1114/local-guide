@@ -4,10 +4,11 @@ type JwtPayload = {
   exp?: number;
 };
 
+const EXPIRY_BUFFER_SECONDS = 60;
+
 /**
  * Returns true when the provided JWT exists and its exp claim is still in the future.
  */
-const EXPIRY_BUFFER_SECONDS = 60;
 
 export function isJwtValid(token?: string | null): boolean {
   if (!token) {

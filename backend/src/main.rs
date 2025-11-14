@@ -27,7 +27,10 @@ const DEFAULT_JWT_TTL_SECONDS: u64 = 3600;
 
 #[tokio::main]
 async fn main() -> Result<(), BackendError> {
-    let _ = dotenvy::dotenv();
+    match dotenvy::dotenv() {
+        Ok(_) => {}
+        Err(e) => tracing::debug!("Could not load .env file: {}", e),
+    }
     init_tracing();
     run().await
 }
