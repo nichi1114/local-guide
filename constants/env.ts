@@ -21,42 +21,37 @@ const DEFAULT_PROVIDER = 'google';
 const DEFAULT_PROVIDER_IOS = 'google-ios';
 const DEFAULT_PROVIDER_ANDROID = 'google-android';
 
-const envOr = (key: string | undefined, fallback?: string) => {
-  if (!key) {
-    return fallback;
-  }
-  const value = process.env[key];
-  return value && value.length > 0 ? value : fallback;
-};
+const envOr = (value: string | undefined, fallback?: string) =>
+  value && value.length > 0 ? value : fallback;
 
 const pickFirst = (...values: Array<string | undefined>) =>
   values.find((value) => value && value.length > 0);
 
 export const API_BASE_URL =
-  envOr('BACKEND_URL', extra.backendUrl) ?? DEFAULT_BACKEND;
+  envOr(process.env.BACKEND_URL, extra.backendUrl) ?? DEFAULT_BACKEND;
 
-const sharedClientId = envOr('GOOGLE_CLIENT_ID', extra.googleClientId);
+const sharedClientId = envOr(process.env.GOOGLE_CLIENT_ID, extra.googleClientId);
 const iosClientId =
-  pickFirst(envOr('GOOGLE_IOS_CLIENT_ID', extra.googleIosClientId), sharedClientId) ??
+  pickFirst(envOr(process.env.GOOGLE_IOS_CLIENT_ID, extra.googleIosClientId), sharedClientId) ??
   '';
 const androidClientId =
   pickFirst(
-    envOr('GOOGLE_ANDROID_CLIENT_ID', extra.googleAndroidClientId),
+    envOr(process.env.GOOGLE_ANDROID_CLIENT_ID, extra.googleAndroidClientId),
     sharedClientId,
   ) ?? '';
 const webClientId =
   pickFirst(sharedClientId, iosClientId, androidClientId) ?? '';
 
 const iosProviderId =
-  envOr('GOOGLE_IOS_PROVIDER_NAME', extra.googleProviderIdIos) ??
-  envOr('GOOGLE_PROVIDER_NAME', extra.googleProviderId) ??
+  envOr(process.env.GOOGLE_IOS_PROVIDER_NAME, extra.googleProviderIdIos) ??
+  envOr(process.env.GOOGLE_PROVIDER_NAME, extra.googleProviderId) ??
   DEFAULT_PROVIDER_IOS;
 const androidProviderId =
-  envOr('GOOGLE_ANDROID_PROVIDER_NAME', extra.googleProviderIdAndroid) ??
-  envOr('GOOGLE_PROVIDER_NAME', extra.googleProviderId) ??
+  envOr(process.env.GOOGLE_ANDROID_PROVIDER_NAME, extra.googleProviderIdAndroid) ??
+  envOr(process.env.GOOGLE_PROVIDER_NAME, extra.googleProviderId) ??
   DEFAULT_PROVIDER_ANDROID;
 const webProviderId =
-  envOr('GOOGLE_PROVIDER_NAME', extra.googleProviderId) ??
+  envOr(process.env.GOOGLE_PROVIDER_NAME, extra.googleProviderId) ??
   iosProviderId ??
   DEFAULT_PROVIDER;
 
@@ -74,12 +69,15 @@ export const GOOGLE_PROVIDER_ID =
       ? androidProviderId
       : webProviderId;
 
-const sharedRedirect = envOr('GOOGLE_REDIRECT_URI', extra.googleRedirectUri);
+const sharedRedirect = envOr(process.env.GOOGLE_REDIRECT_URI, extra.googleRedirectUri);
 const redirectUriIos =
-  pickFirst(envOr('GOOGLE_IOS_REDIRECT_URI', extra.googleRedirectUriIos), sharedRedirect) ?? '';
+  pickFirst(
+    envOr(process.env.GOOGLE_IOS_REDIRECT_URI, extra.googleRedirectUriIos),
+    sharedRedirect,
+  ) ?? '';
 const redirectUriAndroid =
   pickFirst(
-    envOr('GOOGLE_ANDROID_REDIRECT_URI', extra.googleRedirectUriAndroid),
+    envOr(process.env.GOOGLE_ANDROID_REDIRECT_URI, extra.googleRedirectUriAndroid),
     sharedRedirect,
   ) ?? '';
 const redirectUriWeb =
