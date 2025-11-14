@@ -16,10 +16,10 @@ import { persistAuthSession } from "@/store/authSlice";
 
 WebBrowser.maybeCompleteAuthSession();
 
-const discovery: AuthSession.DiscoveryDocument = {
+const GOOGLE_DISCOVERY: AuthSession.DiscoveryDocument = {
   authorizationEndpoint: "https://accounts.google.com/o/oauth2/v2/auth",
   tokenEndpoint: "https://oauth2.googleapis.com/token",
-};
+} as const;
 
 const redirectUri =
   GOOGLE_REDIRECT_URI ||
@@ -47,7 +47,7 @@ export function useGoogleAuthSession() {
         prompt: "consent",
       },
     },
-    discovery,
+    GOOGLE_DISCOVERY,
   );
 
   const ready = useMemo(() => Boolean(request), [request]);
