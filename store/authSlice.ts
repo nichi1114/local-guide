@@ -1,12 +1,12 @@
-import * as SecureStore from 'expo-secure-store';
-import { createAsyncThunk, createSlice } from '@reduxjs/toolkit';
+import * as SecureStore from "expo-secure-store";
+import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
 
-import type { BackendLoginResponse } from '@/types/auth';
-import { isJwtValid } from '@/utils/jwt';
+import type { BackendLoginResponse } from "@/types/auth";
+import { isJwtValid } from "@/utils/jwt";
 
-const STORAGE_KEY = 'local-guide:auth-session';
+const STORAGE_KEY = "LOCAL_GUIDE_AUTH_SESSION";
 
-export const hydrateAuthSession = createAsyncThunk('auth/hydrate', async () => {
+export const hydrateAuthSession = createAsyncThunk("auth/hydrate", async () => {
   const raw = await SecureStore.getItemAsync(STORAGE_KEY);
   if (!raw) {
     return null;
@@ -20,21 +20,21 @@ export const hydrateAuthSession = createAsyncThunk('auth/hydrate', async () => {
     }
     return parsed;
   } catch (error) {
-    console.warn('Failed to parse persisted session', error);
+    console.warn("Failed to parse persisted session", error);
     await SecureStore.deleteItemAsync(STORAGE_KEY);
     return null;
   }
 });
 
 export const persistAuthSession = createAsyncThunk(
-  'auth/persist',
+  "auth/persist",
   async (session: BackendLoginResponse) => {
     await SecureStore.setItemAsync(STORAGE_KEY, JSON.stringify(session));
     return session;
-  }
+  },
 );
 
-export const clearAuthSession = createAsyncThunk('auth/clear', async () => {
+export const clearAuthSession = createAsyncThunk("auth/clear", async () => {
   await SecureStore.deleteItemAsync(STORAGE_KEY);
   return null;
 });
@@ -50,7 +50,7 @@ const initialState: AuthState = {
 };
 
 const authSlice = createSlice({
-  name: 'auth',
+  name: "auth",
   initialState,
   reducers: {},
   extraReducers: (builder) => {
