@@ -28,7 +28,7 @@ struct ProviderPath {
 #[derive(Deserialize)]
 struct ExchangeRequest {
     code: String,
-    code_verifier: String,
+    code_verifier: Option<String>,
 }
 
 #[cfg_attr(test, derive(Deserialize))]
@@ -43,13 +43,28 @@ async fn complete_callback(
     Path(path): Path<ProviderPath>,
     Json(payload): Json<ExchangeRequest>,
 ) -> Result<Json<LoginResponse>, (StatusCode, Json<ErrorResponse>)> {
-    let Some(service) = state.auth_service(&path.provider) else {
-        return Err(provider_not_configured(&path.provider));
+    finish_login(
+        state,
+        path.provider,
+        payload.code,
+        payload.code_verifier.as_deref(),
+    )
+    .await
+}
+
+async fn finish_login(
+    state: AppState,
+    provider: String,
+    code: String,
+    code_verifier: Option<&str>,
+) -> Result<Json<LoginResponse>, (StatusCode, Json<ErrorResponse>)> {
+    let Some(service) = state.auth_service(&provider) else {
+        return Err(provider_not_configured(&provider));
     };
     let jwt_manager = state.jwt_manager();
 
     let user = service
-        .complete_oauth_flow(&payload.code, &payload.code_verifier)
+        .complete_oauth_flow(&code, code_verifier)
         .await
         .map_err(map_auth_error)?;
 
@@ -247,7 +262,6 @@ mod tests {
         let config = OAuthProviderConfig {
             provider_id: "google".to_string(),
             client_id: "client-id".to_string(),
-            client_secret: "client-secret".to_string(),
             auth_url: format!("{}/auth", mock_server.uri()),
             token_url: format!("{}/token", mock_server.uri()),
             userinfo_url: format!("{}/userinfo", mock_server.uri()),

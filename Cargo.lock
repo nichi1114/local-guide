@@ -1109,6 +1109,7 @@ version = "0.1.0"
 dependencies = [
  "axum",
  "chrono",
+ "dotenvy",
  "futures",
  "http-body-util",
  "hyper 1.7.0",

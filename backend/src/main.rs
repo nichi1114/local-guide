@@ -27,6 +27,10 @@ const DEFAULT_JWT_TTL_SECONDS: u64 = 3600;
 
 #[tokio::main]
 async fn main() -> Result<(), BackendError> {
+    match dotenvy::dotenv() {
+        Ok(_) => {}
+        Err(e) => tracing::debug!("Could not load .env file: {}", e),
+    }
     init_tracing();
     run().await
 }
@@ -83,7 +87,8 @@ async fn run() -> Result<(), BackendError> {
 
     let app = build_router(state);
 
-    let listener = TcpListener::bind(DEFAULT_ADDR).await?;
+    let listen_addr = resolve_listen_addr();
+    let listener = TcpListener::bind(&listen_addr).await?;
     let address = listener.local_addr()?;
 
     tracing::info!(%address, "listening for requests");
@@ -95,6 +100,16 @@ async fn run() -> Result<(), BackendError> {
 
 fn build_router(state: AppState) -> Router {
     routes::router(state)
+}
+
+fn resolve_listen_addr() -> String {
+    if let Ok(addr) = std::env::var("BACKEND_BIND_ADDR") {
+        let trimmed = addr.trim();
+        if !trimmed.is_empty() {
+            return trimmed.to_string();
+        }
+    }
+    DEFAULT_ADDR.to_string()
 }
 
 #[derive(Debug, Error)]

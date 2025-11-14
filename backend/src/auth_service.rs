@@ -1,7 +1,7 @@
 use oauth2::reqwest::async_http_client;
 use oauth2::{
-    basic::BasicClient, AuthUrl, AuthorizationCode, ClientId, ClientSecret, PkceCodeVerifier,
-    RedirectUrl, TokenResponse, TokenUrl,
+    basic::BasicClient, AuthUrl, AuthorizationCode, ClientId, PkceCodeVerifier, RedirectUrl,
+    TokenResponse, TokenUrl,
 };
 use reqwest::Url;
 use serde::Deserialize;
@@ -57,7 +57,7 @@ impl AuthService {
 
         let client = BasicClient::new(
             ClientId::new(config.client_id.clone()),
-            Some(ClientSecret::new(config.client_secret.clone())),
+            None,
             auth_url,
             Some(token_url),
         )
@@ -79,12 +79,17 @@ impl AuthService {
     pub async fn complete_oauth_flow(
         &self,
         code: &str,
-        code_verifier: &str,
+        code_verifier: Option<&str>,
     ) -> Result<UserRecord, AuthError> {
-        let token_response = self
+        let mut request = self
             .client
-            .exchange_code(AuthorizationCode::new(code.to_owned()))
-            .set_pkce_verifier(PkceCodeVerifier::new(code_verifier.to_owned()))
+            .exchange_code(AuthorizationCode::new(code.to_owned()));
+
+        if let Some(verifier) = code_verifier {
+            request = request.set_pkce_verifier(PkceCodeVerifier::new(verifier.to_owned()));
+        }
+
+        let token_response = request
             .request_async(async_http_client)
             .await
             .map_err(|error| AuthError::TokenExchange(error.to_string()))?;
@@ -171,7 +176,6 @@ mod tests {
         OAuthProviderConfig {
             provider_id: "google".to_string(),
             client_id: "client-id".to_string(),
-            client_secret: "client-secret".to_string(),
             auth_url: format!("{}/auth", mock_server.uri()),
             token_url: format!("{}/token", mock_server.uri()),
             userinfo_url: format!("{}/userinfo", mock_server.uri()),
@@ -215,7 +219,7 @@ mod tests {
             .await;
 
         let user = service
-            .complete_oauth_flow("test-code", "test-verifier")
+            .complete_oauth_flow("test-code", Some("test-verifier"))
             .await
             .expect("exchange code");
 
@@ -257,7 +261,7 @@ mod tests {
             .await;
 
         service
-            .complete_oauth_flow("code-1", "verifier-1")
+            .complete_oauth_flow("code-1", Some("verifier-1"))
             .await
             .expect("first exchange succeeds");
 
@@ -289,7 +293,7 @@ mod tests {
             .await;
 
         let user = service
-            .complete_oauth_flow("code-2", "verifier-2")
+            .complete_oauth_flow("code-2", Some("verifier-2"))
             .await
             .expect("second exchange succeeds");
 

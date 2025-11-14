@@ -16,7 +16,7 @@ docker run --rm -p 5432:5432 \
   postgres:15
 ```
 
-- Once the server is accepting connections, apply the schema by running the `init_db.sql` file located at `backend/sql/init.sql`:
+- Once the server is accepting connections, apply the schema by running `backend/sql/init.sql`:
 
 ```sh
 psql -U postgres -d local_guide -f backend/sql/init.sql
@@ -31,26 +31,35 @@ psql -U postgres -d local_guide -f backend/sql/init.sql
 
 The script boots a disposable Docker container named `local-guide-postgres` and automatically feeds it the same `init_db.sql` schema.
 
-### 2. Export required environment variables
+### 2. Configure environment variables
 
-The backend refuses to start unless these variables are set in the current shell:
+Both the backend (Rust) service and the Expo frontend read configuration from a `.env` file at the repository root. Create that file manually (or via your preferred secrets manager) using the template below, then replace the placeholder values:
 
-```sh
-export DATABASE_URL=postgres://postgres:postgres@localhost:5432/local_guide
-export JWT_SECRET=<random-jwt-secret>
-# optional overrides
-export JWT_TTL_SECONDS=3600
-export GOOGLE_PROVIDER_NAME=google
-
-# Google OAuth configuration (all required)
-export GOOGLE_CLIENT_ID=<google-clould-console-id>
-export GOOGLE_CLIENT_SECRET=<google-count-console-secret>
-export GOOGLE_REDIRECT_URI=https://your-website.com/auth/google/callback
-# Optional overrides if using a non-default Google workspace / proxy
-export GOOGLE_AUTH_URL=...
-export GOOGLE_TOKEN_URL=...
-export GOOGLE_USERINFO_URL=...
+```env
+BACKEND_URL=http://localhost:8080
+#BACKEND_BIND_ADDR=0.0.0.0:8080
+DATABASE_URL=postgres://postgres:postgres@localhost:5432/local_guide
+#TEST_DATABASE_URL=postgres://postgres:postgres@localhost:5432/local_guide_test
+JWT_SECRET=replace-with-a-random-secret
+JWT_TTL_SECONDS=3600
+# Google OAuth – iOS (required for iOS builds)
+GOOGLE_IOS_CLIENT_ID=<ios-google-client-id>
+GOOGLE_IOS_REDIRECT_URI=com.ece1778.localguide:/oauthredirect
+#GOOGLE_IOS_PROVIDER_NAME=google-ios
+# Google OAuth – Android (required for Android builds)
+GOOGLE_ANDROID_CLIENT_ID=<android-google-client-id>
+GOOGLE_ANDROID_REDIRECT_URI=com.ece1778.localguide:/oauthredirect
+#GOOGLE_ANDROID_PROVIDER_NAME=google-android
+# Optional provider override
+#GOOGLE_PROVIDER_NAME=google
+#GOOGLE_AUTH_URL=https://accounts.google.com/o/oauth2/v2/auth
+#GOOGLE_TOKEN_URL=https://oauth2.googleapis.com/token
+#GOOGLE_USERINFO_URL=https://www.googleapis.com/oauth2/v3/userinfo
 ```
+
+The Expo client automatically hits `/auth/<provider>/callback`, where `<provider>` becomes `google-ios` or `google-android` (and `google` only if you also configure the shared web client), so be sure the backend has matching values for every platform you plan to support.
+
+`BACKEND_URL` should point to the public base URL (what the frontend uses), while `BACKEND_BIND_ADDR` controls which host/port the Axum server listens on. Leave `BACKEND_BIND_ADDR` unset to keep the default `0.0.0.0:8080`. Environment variables exported directly in your shell still override `.env`, which can be handy for short-lived overrides or CI.
 
 ### 3. Start the backend
 
