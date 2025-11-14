@@ -58,5 +58,6 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
     ...(config.extra ?? {}),
     backendUrl: process.env.BACKEND_URL ?? DEFAULT_BACKEND_URL,
     googleClientId: process.env.GOOGLE_CLIENT_ID ?? '',
+    googleRedirectUri: process.env.GOOGLE_REDIRECT_URI ?? '',
   },
 });

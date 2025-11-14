@@ -51,7 +51,7 @@ GOOGLE_PROVIDER_NAME=google
 #GOOGLE_USERINFO_URL=https://www.googleapis.com/oauth2/v3/userinfo
 ```
 
-Environment variables exported directly in your shell still override `.env`, which can be handy for short-lived overrides or CI.
+`BACKEND_URL` should point to the public base URL (what the frontend uses), while `BACKEND_BIND_ADDR` controls which host/port the Axum server listens on. Leave `BACKEND_BIND_ADDR` unset to keep the default `0.0.0.0:8080`. Environment variables exported directly in your shell still override `.env`, which can be handy for short-lived overrides or CI.
 
 ### 3. Start the backend
 

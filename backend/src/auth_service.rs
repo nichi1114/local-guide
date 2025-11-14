@@ -79,12 +79,17 @@ impl AuthService {
     pub async fn complete_oauth_flow(
         &self,
         code: &str,
-        code_verifier: &str,
+        code_verifier: Option<&str>,
     ) -> Result<UserRecord, AuthError> {
-        let token_response = self
+        let mut request = self
             .client
-            .exchange_code(AuthorizationCode::new(code.to_owned()))
-            .set_pkce_verifier(PkceCodeVerifier::new(code_verifier.to_owned()))
+            .exchange_code(AuthorizationCode::new(code.to_owned()));
+
+        if let Some(verifier) = code_verifier {
+            request = request.set_pkce_verifier(PkceCodeVerifier::new(verifier.to_owned()));
+        }
+
+        let token_response = request
             .request_async(async_http_client)
             .await
             .map_err(|error| AuthError::TokenExchange(error.to_string()))?;
@@ -215,7 +220,7 @@ mod tests {
             .await;
 
         let user = service
-            .complete_oauth_flow("test-code", "test-verifier")
+            .complete_oauth_flow("test-code", Some("test-verifier"))
             .await
             .expect("exchange code");
 
@@ -257,7 +262,7 @@ mod tests {
             .await;
 
         service
-            .complete_oauth_flow("code-1", "verifier-1")
+            .complete_oauth_flow("code-1", Some("verifier-1"))
             .await
             .expect("first exchange succeeds");
 
@@ -289,7 +294,7 @@ mod tests {
             .await;
 
         let user = service
-            .complete_oauth_flow("code-2", "verifier-2")
+            .complete_oauth_flow("code-2", Some("verifier-2"))
             .await
             .expect("second exchange succeeds");
 

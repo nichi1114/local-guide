@@ -3,7 +3,11 @@ import { Platform } from "react-native";
 import * as AuthSession from "expo-auth-session";
 import * as WebBrowser from "expo-web-browser";
 
-import { API_BASE_URL, GOOGLE_CLIENT_ID } from "@/constants/env";
+import {
+  API_BASE_URL,
+  GOOGLE_CLIENT_ID,
+  GOOGLE_REDIRECT_URI,
+} from "@/constants/env";
 import type { BackendLoginResponse } from "@/types/auth";
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
 import { selectAuthSession, selectHasValidToken } from "@/store/authSelectors";
@@ -16,10 +20,12 @@ const discovery: AuthSession.DiscoveryDocument = {
   tokenEndpoint: "https://oauth2.googleapis.com/token",
 };
 
-const redirectUri = AuthSession.makeRedirectUri({
-  scheme: "localguide",
-  preferLocalhost: true,
-});
+const redirectUri =
+  GOOGLE_REDIRECT_URI ||
+  AuthSession.makeRedirectUri({
+    scheme: "localguide",
+    preferLocalhost: true,
+  });
 
 export function useGoogleAuthSession() {
   const dispatch = useAppDispatch();

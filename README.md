@@ -2,7 +2,7 @@
 
 ## Getting started
 
-1. Create a `.env` file in the repository root using the template below, then fill in your real values. The same `.env` powers both the Rust backend (`cargo run --bin local-guide-backend`) and the Expo app (`npm run start`), so you only need to set things like `BACKEND_URL`, `DATABASE_URL`, and the Google OAuth credentials once.
+1. Create a `.env` file in the repository root using the template below, then fill in your real values. The same `.env` powers both the Rust backend (`cargo run --bin local-guide-backend`) and the Expo app (`npm run start`). Use `BACKEND_URL` for the publicly reachable base URL that the frontend calls, and `BACKEND_BIND_ADDR` (default `0.0.0.0:8080`) if you need the server to bind somewhere other than the default loopback/port.
 
    ```env
    BACKEND_URL=http://localhost:8080
