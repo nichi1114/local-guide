@@ -1,4 +1,5 @@
 // Reuse the ActionButton component implementation from Assignment.
+import { globalColors } from "@/constants/global-colors";
 import { Pressable, StyleProp, StyleSheet, Text, ViewStyle } from "react-native";
 
 type Variant = "primary" | "danger";
@@ -13,8 +14,8 @@ type Props = {
 
 export default function ActionButton({ onPress, children, variant, style, testID }: Props) {
   const variantColors = {
-    primary: { base: colors.primary, pressed: colors.primaryPressed },
-    danger: { base: colors.danger, pressed: colors.dangerPressed },
+    primary: { base: globalColors.primary, pressed: globalColors.primaryPressed },
+    danger: { base: globalColors.danger, pressed: globalColors.dangerPressed },
   };
 
   return (
@@ -36,14 +37,6 @@ export default function ActionButton({ onPress, children, variant, style, testID
     </Pressable>
   );
 }
-
-const colors = {
-  primary: "#ffd900ff",
-  primaryPressed: "#b89f0fff",
-  danger: "#dc3545",
-  dangerPressed: "#a71d31",
-  white: "#fff",
-};
 
 const styles = StyleSheet.create({
   button: {

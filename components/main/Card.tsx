@@ -1,6 +1,6 @@
 // Reuse the Card component implementation from Assignment.
 import { StyleProp, StyleSheet, ViewProps, ViewStyle } from "react-native";
-import { ThemedView } from "./themed-view";
+import { ThemedView } from "../themed-view";
 
 type Props = ViewProps & {
   style?: StyleProp<ViewStyle>;

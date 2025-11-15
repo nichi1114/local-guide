@@ -6,10 +6,10 @@ import { useRouter } from "expo-router";
 import React from "react";
 import { Pressable, StyleSheet } from "react-native";
 import { useDispatch } from "react-redux";
+import { ThemedText } from "../themed-text";
+import { ThemedView } from "../themed-view";
 import ActionButton from "./ActionButton";
 import Card from "./Card";
-import { ThemedText } from "./themed-text";
-import { ThemedView } from "./themed-view";
 
 type Props = {
   place: Place;

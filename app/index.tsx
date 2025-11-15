@@ -1,47 +1,53 @@
-import PlaceListItem from "@/components/PlaceListItem";
-import PrimaryButton from "@/components/PrimaryButton";
+import PlaceListItem from "@/components/main/PlaceListItem";
+import PrimaryButton from "@/components/main/PrimaryButton";
 import { ThemedText } from "@/components/themed-text";
 import { ThemedView } from "@/components/themed-view";
+import { useAppSelector } from "@/store/hooks";
+import { loadPlacesAsync } from "@/store/placeThunks";
+import { globalStyles } from "@/styles/globalStyles";
 import { useRouter } from "expo-router";
+import { useEffect } from "react";
 import { FlatList, StyleSheet } from "react-native";
-import { useSelector } from "react-redux";
-import { RootState } from "../store/";
+import { useDispatch, useSelector } from "react-redux";
+import { AppDispatch, RootState } from "../store/";
 
 export default function HomeScreen() {
   const router = useRouter();
-
+  const dispatch = useDispatch<AppDispatch>();
+  const userId = useAppSelector((state: RootState) => state.poi.userId);
   const places = useSelector((state: RootState) => state.poi.places);
 
+  useEffect(() => {
+    if (userId) {
+      dispatch(loadPlacesAsync(userId));
+    }
+  }, [userId]);
+
   return (
-    <ThemedView testID="container">
-      <ThemedText type="title">Home</ThemedText>
-      <PrimaryButton onPress={() => router.push("/add-edit")}>Add</PrimaryButton>
+    <ThemedView style={globalStyles.container} testID="container">
+      <PrimaryButton onPress={() => router.push("/add-edit")}>+</PrimaryButton>
 
       <ThemedView style={styles.buttonSpacer} />
       {!places || places.length === 0 ? (
         <ThemedText type="defaultSemiBold">
-          You haven't added any places yet. Click 'Add' to get started!
+          You haven't added any places yet. Click '+' to get started!
         </ThemedText>
-      ) : (
-        <FlatList
-          data={places}
-          keyExtractor={(item) => item.id}
-          renderItem={({ item }) => <PlaceListItem place={item} />}
-          contentContainerStyle={styles.list}
-          testID="activity-list"
-        />
-      )}
+      ) : null}
+      <FlatList
+        data={places}
+        keyExtractor={(item) => item.id}
+        renderItem={({ item }) => <PlaceListItem place={item} />}
+        contentContainerStyle={styles.list}
+        testID="place-list"
+      />
     </ThemedView>
   );
 }
 
 const styles = StyleSheet.create({
-  // Define list padding (paddingBottom: 20)
   list: {
     paddingBottom: 20,
   },
-
-  // Define button spacer (height: 20)
   buttonSpacer: {
     height: 20,
   },

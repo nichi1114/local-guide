@@ -24,7 +24,6 @@ export default function RootLayout() {
       <AuthGate>
         <ThemeProvider value={colorScheme === "dark" ? DarkTheme : DefaultTheme}>
           <Stack>
-            {/* <Stack.Screen name="(tabs)" options={{ headerShown: false }} /> */}
             <Stack.Screen name="login" options={{ title: "Sign In" }} />
             <Stack.Screen name="index" options={{ title: "Home" }} />
             <Stack.Screen name="add-edit" options={{ title: "" }} />

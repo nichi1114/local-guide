@@ -1,4 +1,5 @@
 // Reuse the PrimaryButton component implementation from Assignment.
+import { globalColors } from "@/constants/global-colors";
 import { Pressable, StyleProp, StyleSheet, Text, ViewStyle } from "react-native";
 
 type Props = {
@@ -15,7 +16,7 @@ export default function PrimaryButton({ onPress, children, style, testID }: Prop
       style={({ pressed }) => [
         styles.button,
         {
-          //todo backgroundColor: pressed ? colors.primaryPressed : colors.primary,
+          backgroundColor: pressed ? globalColors.primaryPressed : globalColors.primary,
         },
         style,
       ]}
