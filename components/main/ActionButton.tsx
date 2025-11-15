@@ -20,7 +20,6 @@ export default function ActionButton({ onPress, children, variant, style, testID
 
   return (
     <Pressable
-      // Apply styles.button, dynamic background color based on variant & pressed state, and any additional style
       style={({ pressed }) => [
         styles.button,
         {
@@ -32,7 +31,6 @@ export default function ActionButton({ onPress, children, variant, style, testID
       testID={testID}
       accessibilityRole="button"
     >
-      {/* Apply styles.text */}
       <Text style={styles.text}>{children}</Text>
     </Pressable>
   );

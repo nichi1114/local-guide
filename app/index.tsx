@@ -20,7 +20,7 @@ export default function HomeScreen() {
     if (userId) {
       dispatch(loadPlacesAsync(userId));
     }
-  }, [userId]);
+  }, [userId, dispatch]);
 
   return (
     <ThemedView style={globalStyles.container} testID="container">
@@ -29,7 +29,7 @@ export default function HomeScreen() {
       <ThemedView style={styles.buttonSpacer} />
       {!places || places.length === 0 ? (
         <ThemedText type="defaultSemiBold">
-          You haven't added any places yet. Click '+' to get started!
+          You haven&apos;t added any places yet. Click &apos;+&apos; to get started!
         </ThemedText>
       ) : null}
       <FlatList

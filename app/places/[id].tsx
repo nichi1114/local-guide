@@ -19,10 +19,9 @@ export default function DetailsScreen() {
 
   const dispatch = useAppDispatch();
 
-  const place =
-    typeof id === "string"
-      ? useSelector((state: RootState) => selectPlaceById(state, id))
-      : undefined;
+  const place = useSelector((state: RootState) =>
+    typeof id === "string" ? selectPlaceById(state, id) : undefined,
+  );
 
   if (!place) {
     return (
@@ -50,19 +49,21 @@ export default function DetailsScreen() {
 
       <ThemedView style={styles.buttons}>
         <ActionButton
-          children="Edit"
           variant="primary"
           onPress={() => router.push(`/add-edit?id=${place.id}`)}
           style={styles.button}
           testID="edit-button"
-        />
+        >
+          Edit
+        </ActionButton>
         <ActionButton
-          children="Delete"
           variant="danger"
           onPress={handleDelete}
           style={styles.button}
           testID="delete-button"
-        />
+        >
+          Delete
+        </ActionButton>
       </ThemedView>
     </ThemedView>
   );

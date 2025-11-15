@@ -30,10 +30,9 @@ export default function AddEditScreen() {
 
   const dispatch = useDispatch<AppDispatch>();
 
-  const place =
-    typeof id === "string"
-      ? useSelector((state: RootState) => selectPlaceById(state, id))
-      : undefined;
+  const place = useSelector((state: RootState) =>
+    typeof id === "string" ? selectPlaceById(state, id) : undefined,
+  );
 
   // Create states
   const [name, setName] = useState<string>(place?.name || "");

@@ -45,12 +45,12 @@ export default function PlaceListItem({ place }: Props) {
       </Pressable>
 
       <ThemedView style={styles.buttons}>
-        <ActionButton
-          variant="primary"
-          children="Edit"
-          onPress={() => router.push(`/add-edit?id=${place.id}`)}
-        />
-        <ActionButton variant="danger" children="Delete" onPress={handleDelete} />
+        <ActionButton variant="primary" onPress={() => router.push(`/add-edit?id=${place.id}`)}>
+          Edit
+        </ActionButton>
+        <ActionButton variant="danger" onPress={handleDelete}>
+          Delete
+        </ActionButton>
       </ThemedView>
     </Card>
   );
