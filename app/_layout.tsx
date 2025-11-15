@@ -23,11 +23,19 @@ export default function RootLayout() {
     <Provider store={store}>
       <AuthGate>
         <ThemeProvider value={colorScheme === "dark" ? DarkTheme : DefaultTheme}>
-          <Stack>
+          <Stack
+            screenOptions={{
+              headerTitleStyle: {
+                fontWeight: "bold",
+              },
+              headerTitleAlign: "center",
+              headerBackTitle: "Back",
+            }}
+          >
             <Stack.Screen name="login" options={{ title: "Sign In" }} />
             <Stack.Screen name="index" options={{ title: "Home" }} />
             <Stack.Screen name="add-edit" options={{ title: "" }} />
-            <Stack.Screen name="places/[id]" options={{ title: "Place of Interest Details" }} />
+            <Stack.Screen name="places/[id]" options={{ title: "Details" }} />
           </Stack>
           <StatusBar style="auto" />
         </ThemeProvider>

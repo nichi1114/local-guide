@@ -1,15 +1,22 @@
+import PrimaryButton from "@/components/main/PrimaryButton";
 import { ThemedText } from "@/components/themed-text";
 import { ThemedView } from "@/components/themed-view";
 import { globalColors } from "@/constants/global-colors";
-import { addPlace, selectPlaceById, updatePlace } from "@/store/placeSlice";
+import { AppDispatch, RootState } from "@/store";
+import { useAppSelector } from "@/store/hooks";
+import {
+  addPlace,
+  selectPlaceById,
+  selectPlaces,
+  selectUserId,
+  updatePlace,
+} from "@/store/placeSlice";
 import { savePlacesAsync } from "@/store/placeThunks";
+import { globalStyles } from "@/styles/globalStyles";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { useEffect, useState } from "react";
 import { Alert, StyleSheet, TextInput } from "react-native";
 import { useDispatch, useSelector } from "react-redux";
-import PrimaryButton from "../components/main/PrimaryButton";
-import { AppDispatch, RootState, store } from "../store";
-import { globalStyles } from "../styles/globalStyles";
 
 export default function AddEditScreen() {
   function isEmptyInput(value: string): boolean {
@@ -18,6 +25,8 @@ export default function AddEditScreen() {
 
   const router = useRouter();
   const { id } = useLocalSearchParams();
+  const userId = useAppSelector(selectUserId);
+  const places = useAppSelector(selectPlaces);
 
   const dispatch = useDispatch<AppDispatch>();
 
@@ -54,7 +63,7 @@ export default function AddEditScreen() {
       return;
     }
 
-    if (!isEmptyInput(location)) {
+    if (isEmptyInput(location)) {
       // todo Expo location
       Alert.alert("Error", "Please enter a location");
       return;
@@ -79,7 +88,6 @@ export default function AddEditScreen() {
         );
       }
     } else {
-      // Dispatch addPlace
       dispatch(
         addPlace({
           name,
@@ -90,18 +98,17 @@ export default function AddEditScreen() {
       );
     }
 
-    const { userId, places } = store.getState().poi;
     if (userId) {
       dispatch(savePlacesAsync({ userId, places }));
     }
 
-    // Navigate back to Home ("/")
     router.push("/");
   };
 
   return (
     <ThemedView style={globalStyles.container}>
-      <ThemedText type="title">{place ? "Edit Place" : "Add Place"}</ThemedText>
+      <ThemedText type="subtitle">{place ? "Edit Place" : "Add Place"}</ThemedText>
+      <ThemedView style={styles.buttonSpacer} />
 
       <TextInput
         style={styles.input}
@@ -128,10 +135,12 @@ export default function AddEditScreen() {
       />
 
       <TextInput
-        style={styles.input}
+        style={styles.largerInput}
         placeholder="Note (optional)"
         value={note}
         onChangeText={setNote}
+        multiline={true}
+        textAlignVertical="top"
         placeholderTextColor={globalColors.placeholder}
       />
 
@@ -142,15 +151,24 @@ export default function AddEditScreen() {
   );
 }
 
+const baseInput = {
+  backgroundColor: globalColors.white,
+  borderWidth: 1,
+  borderColor: globalColors.border,
+  borderRadius: 8,
+  padding: 10,
+  marginBottom: 10,
+  fontSize: 16,
+  color: globalColors.textPrimary,
+};
+
 const styles = StyleSheet.create({
-  input: {
-    backgroundColor: globalColors.white,
-    borderWidth: 1,
-    borderColor: globalColors.border,
-    borderRadius: 8,
-    padding: 10,
-    marginBottom: 10,
-    fontSize: 16,
-    color: globalColors.textPrimary,
+  input: baseInput,
+  largerInput: {
+    ...baseInput,
+    height: 100,
+  },
+  buttonSpacer: {
+    height: 10,
   },
 });

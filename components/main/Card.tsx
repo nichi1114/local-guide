@@ -1,4 +1,5 @@
 // Reuse the Card component implementation from Assignment.
+import { useColorScheme } from "@/hooks/use-color-scheme.web";
 import { StyleProp, StyleSheet, ViewProps, ViewStyle } from "react-native";
 import { ThemedView } from "../themed-view";
 
@@ -7,8 +8,12 @@ type Props = ViewProps & {
 };
 
 export default function Card({ children, style, ...props }: Props) {
+  const theme = useColorScheme() ?? "light";
   return (
-    <ThemedView style={[styles.card, style]} {...props}>
+    <ThemedView
+      style={[styles.card, { borderColor: theme === "light" ? "#000" : "#fff" }, style]}
+      {...props}
+    >
       {children}
     </ThemedView>
   );

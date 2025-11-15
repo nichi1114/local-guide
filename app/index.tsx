@@ -2,20 +2,19 @@ import PlaceListItem from "@/components/main/PlaceListItem";
 import PrimaryButton from "@/components/main/PrimaryButton";
 import { ThemedText } from "@/components/themed-text";
 import { ThemedView } from "@/components/themed-view";
-import { useAppSelector } from "@/store/hooks";
+import { useAppDispatch, useAppSelector } from "@/store/hooks";
+import { selectPlaces, selectUserId } from "@/store/placeSlice";
 import { loadPlacesAsync } from "@/store/placeThunks";
 import { globalStyles } from "@/styles/globalStyles";
 import { useRouter } from "expo-router";
 import { useEffect } from "react";
 import { FlatList, StyleSheet } from "react-native";
-import { useDispatch, useSelector } from "react-redux";
-import { AppDispatch, RootState } from "../store/";
 
 export default function HomeScreen() {
   const router = useRouter();
-  const dispatch = useDispatch<AppDispatch>();
-  const userId = useAppSelector((state: RootState) => state.poi.userId);
-  const places = useSelector((state: RootState) => state.poi.places);
+  const dispatch = useAppDispatch();
+  const userId = useAppSelector(selectUserId);
+  const places = useAppSelector(selectPlaces);
 
   useEffect(() => {
     if (userId) {
