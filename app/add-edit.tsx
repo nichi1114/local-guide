@@ -111,7 +111,6 @@ export default function AddEditScreen() {
     }
 
     if (isEmptyInput(location)) {
-      // todo Expo location
       Alert.alert("Error", "Please enter a location");
       return;
     }
@@ -162,7 +161,7 @@ export default function AddEditScreen() {
           <ThemedText type="subtitle">{place ? "Edit Place" : "Add Place"}</ThemedText>
           <ThemedView style={styles.buttonSpacer} />
 
-          <ThemedText>Name:</ThemedText>
+          <ThemedText type="defaultSemiBold">Name:</ThemedText>
           <TextInput
             style={styles.input}
             placeholder="Name"
@@ -171,7 +170,7 @@ export default function AddEditScreen() {
             placeholderTextColor={globalColors.placeholder}
           />
 
-          <ThemedText>Category:</ThemedText>
+          <ThemedText type="defaultSemiBold">Category:</ThemedText>
           <TextInput
             style={styles.input}
             placeholder="Category (e.g. Cafe, Park)"
@@ -180,7 +179,7 @@ export default function AddEditScreen() {
             placeholderTextColor={globalColors.placeholder}
           />
 
-          <ThemedText>Location:</ThemedText>
+          <ThemedText type="defaultSemiBold">Location:</ThemedText>
           <TextInput
             style={styles.input}
             placeholder="Location"
@@ -196,7 +195,7 @@ export default function AddEditScreen() {
           >
             Use Current Location
           </ActionButton>
-          <ThemedText>Note:</ThemedText>
+          <ThemedText type="defaultSemiBold">Note:</ThemedText>
           <TextInput
             style={styles.largerInput}
             placeholder="Note (optional)"
