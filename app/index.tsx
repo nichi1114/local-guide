@@ -2,8 +2,9 @@ import PlaceListItem from "@/components/main/PlaceListItem";
 import PrimaryButton from "@/components/main/PrimaryButton";
 import { ThemedText } from "@/components/themed-text";
 import { ThemedView } from "@/components/themed-view";
+import { selectAuthSession } from "@/store/authSelectors";
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
-import { selectPlaces, selectPlaceUserId } from "@/store/placeSlice";
+import { selectPlaces, setUserId } from "@/store/placeSlice";
 import { loadPlacesAsync } from "@/store/placeThunks";
 import { globalStyles } from "@/styles/globalStyles";
 import { useRouter } from "expo-router";
@@ -13,14 +14,15 @@ import { FlatList, StyleSheet } from "react-native";
 export default function HomeScreen() {
   const router = useRouter();
   const dispatch = useAppDispatch();
-  const userId = useAppSelector(selectPlaceUserId);
+  const session = useAppSelector(selectAuthSession);
   const places = useAppSelector(selectPlaces);
 
   useEffect(() => {
-    if (userId) {
-      dispatch(loadPlacesAsync(userId));
+    if (session?.user?.id) {
+      dispatch(setUserId(session.user.id));
+      dispatch(loadPlacesAsync(session.user.id));
     }
-  }, [userId, dispatch]);
+  }, [session?.user?.id, dispatch]);
 
   return (
     <ThemedView style={globalStyles.container} testID="container">
