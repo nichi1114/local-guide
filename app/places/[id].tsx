@@ -4,7 +4,7 @@ import { ThemedText } from "@/components/themed-text";
 import { ThemedView } from "@/components/themed-view";
 import { RootState } from "@/store";
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
-import { deletePlace, selectPlaceById, selectPlaces, selectPlaceUserId } from "@/store/placeSlice";
+import { deletePlace, selectPlaceById, selectPlaceUserId } from "@/store/placeSlice";
 import { savePlacesAsync } from "@/store/placeThunks";
 import { globalStyles } from "@/styles/globalStyles";
 import { useLocalSearchParams, useRouter } from "expo-router";
@@ -15,7 +15,6 @@ export default function DetailsScreen() {
   const router = useRouter();
   const { id } = useLocalSearchParams();
   const userId = useAppSelector(selectPlaceUserId);
-  const places = useAppSelector(selectPlaces);
 
   const dispatch = useAppDispatch();
 
@@ -36,7 +35,7 @@ export default function DetailsScreen() {
       dispatch(deletePlace(id));
 
       if (userId) {
-        dispatch(savePlacesAsync({ userId, places }));
+        dispatch(savePlacesAsync(userId));
       }
     }
     // Navigate back to Home ("/")

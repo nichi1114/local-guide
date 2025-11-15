@@ -26,7 +26,7 @@ export default function PlaceListItem({ place }: Props) {
     // save to storage
     const { userId, places } = store.getState().poi;
     if (userId) {
-      dispatch(savePlacesAsync({ userId, places }));
+      dispatch(savePlacesAsync(userId));
     }
   };
 

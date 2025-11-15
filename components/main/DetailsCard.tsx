@@ -2,7 +2,6 @@
 import { Place } from "@/types/place";
 import { StyleSheet } from "react-native";
 import { ThemedText } from "../themed-text";
-import { Collapsible } from "../ui/collapsible";
 import Card from "./Card";
 
 type Props = {
@@ -11,14 +10,12 @@ type Props = {
 
 export default function DetailsCard({ place }: Props) {
   return (
-    <Collapsible title={place.name}>
-      <Card>
-        <ThemedText style={styles.text}>Name: {place.name}</ThemedText>
-        <ThemedText style={styles.text}>Category: {place.category}</ThemedText>
-        <ThemedText style={styles.text}>Location: {place.location}</ThemedText>
-        {place.note ? <ThemedText style={styles.text}>Note: {place.note}</ThemedText> : null}
-      </Card>
-    </Collapsible>
+    <Card>
+      <ThemedText style={styles.text}>Name: {place.name}</ThemedText>
+      <ThemedText style={styles.text}>Category: {place.category}</ThemedText>
+      <ThemedText style={styles.text}>Location: {place.location}</ThemedText>
+      {place.note ? <ThemedText style={styles.text}>Note: {place.note}</ThemedText> : null}
+    </Card>
   );
 }
 

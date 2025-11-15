@@ -16,13 +16,20 @@ export default function HomeScreen() {
   const dispatch = useAppDispatch();
   const session = useAppSelector(selectAuthSession);
   const places = useAppSelector(selectPlaces);
+  const HARDCODED_USER_ID = "test-user-id-123"; //
 
   useEffect(() => {
     if (session?.user?.id) {
       dispatch(setUserId(session.user.id));
       dispatch(loadPlacesAsync(session.user.id));
+    } else {
+      // Hardcoded test id
+      dispatch(setUserId(HARDCODED_USER_ID));
+      dispatch(loadPlacesAsync(HARDCODED_USER_ID));
     }
-  }, [session?.user?.id, dispatch]);
+    // Remove session?.user?.id from dependency array to avoid running when it changes
+    // This hook will now only run on mount and when dispatch changes (which it won't)
+  }, [dispatch]);
 
   return (
     <ThemedView style={globalStyles.container} testID="container">

@@ -5,13 +5,7 @@ import { ThemedView } from "@/components/themed-view";
 import { globalColors } from "@/constants/global-colors";
 import { AppDispatch, RootState } from "@/store";
 import { useAppSelector } from "@/store/hooks";
-import {
-  addPlace,
-  selectPlaceById,
-  selectPlaces,
-  selectPlaceUserId,
-  updatePlace,
-} from "@/store/placeSlice";
+import { addPlace, selectPlaceById, selectPlaceUserId, updatePlace } from "@/store/placeSlice";
 import { savePlacesAsync } from "@/store/placeThunks";
 import { globalStyles } from "@/styles/globalStyles";
 import * as Location from "expo-location";
@@ -72,7 +66,6 @@ export default function AddEditScreen() {
   const router = useRouter();
   const { id } = useLocalSearchParams();
   const userId = useAppSelector(selectPlaceUserId);
-  const places = useAppSelector(selectPlaces);
 
   const dispatch = useDispatch<AppDispatch>();
 
@@ -153,7 +146,7 @@ export default function AddEditScreen() {
     }
 
     if (userId) {
-      dispatch(savePlacesAsync({ userId, places }));
+      dispatch(savePlacesAsync(userId));
     }
 
     router.push("/");

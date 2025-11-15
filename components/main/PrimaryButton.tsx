@@ -12,7 +12,6 @@ type Props = {
 export default function PrimaryButton({ onPress, children, style, testID }: Props) {
   return (
     <Pressable
-      // Apply styles.button, dynamic background color when pressed, and any additional style from props
       style={({ pressed }) => [
         styles.button,
         {
@@ -36,7 +35,6 @@ const styles = StyleSheet.create({
     borderRadius: 10,
     alignItems: "center",
     justifyContent: "center",
-    marginTop: 10,
   },
   text: {
     fontSize: 16,
