@@ -66,7 +66,7 @@ export const placeSlice = createSlice({
 });
 export const { setUserId, addPlace, updatePlace, deletePlace, setPlaces } = placeSlice.actions;
 
-export const selectUserId = (state: RootState) => state.poi.userId;
+export const selectPlaceUserId = (state: RootState) => state.poi.userId;
 export const selectPlaces = (state: RootState) => state.poi.places;
 export const selectPlaceById = (state: RootState, id: string) =>
   state.poi.places.find((item) => item.id === id);

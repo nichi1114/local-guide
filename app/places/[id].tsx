@@ -4,7 +4,7 @@ import { ThemedText } from "@/components/themed-text";
 import { ThemedView } from "@/components/themed-view";
 import { RootState } from "@/store";
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
-import { deletePlace, selectPlaceById, selectPlaces, selectUserId } from "@/store/placeSlice";
+import { deletePlace, selectPlaceById, selectPlaces, selectPlaceUserId } from "@/store/placeSlice";
 import { savePlacesAsync } from "@/store/placeThunks";
 import { globalStyles } from "@/styles/globalStyles";
 import { useLocalSearchParams, useRouter } from "expo-router";
@@ -14,7 +14,7 @@ import { useSelector } from "react-redux";
 export default function DetailsScreen() {
   const router = useRouter();
   const { id } = useLocalSearchParams();
-  const userId = useAppSelector(selectUserId);
+  const userId = useAppSelector(selectPlaceUserId);
   const places = useAppSelector(selectPlaces);
 
   const dispatch = useAppDispatch();

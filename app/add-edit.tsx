@@ -1,3 +1,4 @@
+import ActionButton from "@/components/main/ActionButton";
 import PrimaryButton from "@/components/main/PrimaryButton";
 import { ThemedText } from "@/components/themed-text";
 import { ThemedView } from "@/components/themed-view";
@@ -8,24 +9,69 @@ import {
   addPlace,
   selectPlaceById,
   selectPlaces,
-  selectUserId,
+  selectPlaceUserId,
   updatePlace,
 } from "@/store/placeSlice";
 import { savePlacesAsync } from "@/store/placeThunks";
 import { globalStyles } from "@/styles/globalStyles";
+import * as Location from "expo-location";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { useEffect, useState } from "react";
-import { Alert, StyleSheet, TextInput } from "react-native";
+import {
+  Alert,
+  KeyboardAvoidingView,
+  Platform,
+  ScrollView,
+  StyleSheet,
+  TextInput,
+} from "react-native";
 import { useDispatch, useSelector } from "react-redux";
 
-export default function AddEditScreen() {
-  function isEmptyInput(value: string): boolean {
-    return value.trim() === "";
+function isEmptyInput(value: string): boolean {
+  return value.trim() === "";
+}
+
+export async function userCurrentLocation() {
+  let { status } = await Location.requestForegroundPermissionsAsync();
+
+  if (status !== "granted") {
+    Alert.alert("Permission denied");
+    return;
   }
 
+  const location: Location.LocationObject = await Location.getCurrentPositionAsync({});
+  return {
+    la: location.coords.latitude,
+    long: location.coords.longitude,
+  };
+}
+
+export async function convertCoordsToAddress(la: number, long: number) {
+  const result = await Location.reverseGeocodeAsync({ latitude: la, longitude: long });
+  if (!result || result.length === 0) {
+    return "Unknown location";
+  }
+
+  const primaryResult = result[0];
+
+  const address = [
+    primaryResult.name,
+    primaryResult.street,
+    primaryResult.city,
+    primaryResult.region,
+    primaryResult.postalCode,
+    primaryResult.country,
+  ]
+    .filter(Boolean)
+    .join(", ");
+
+  return address;
+}
+
+export default function AddEditScreen() {
   const router = useRouter();
   const { id } = useLocalSearchParams();
-  const userId = useAppSelector(selectUserId);
+  const userId = useAppSelector(selectPlaceUserId);
   const places = useAppSelector(selectPlaces);
 
   const dispatch = useDispatch<AppDispatch>();
@@ -48,6 +94,15 @@ export default function AddEditScreen() {
       setNote(place.note);
     }
   }, [place]);
+
+  const handleUseCurrentLocation = async () => {
+    const coords = await userCurrentLocation();
+    if (!coords) return;
+
+    const address = await convertCoordsToAddress(coords.la, coords.long);
+    console.log(address);
+    setLocation(address);
+  };
 
   const handleSubmit = () => {
     // Validate inputs
@@ -105,48 +160,66 @@ export default function AddEditScreen() {
   };
 
   return (
-    <ThemedView style={globalStyles.container}>
-      <ThemedText type="subtitle">{place ? "Edit Place" : "Add Place"}</ThemedText>
-      <ThemedView style={styles.buttonSpacer} />
+    <KeyboardAvoidingView
+      style={{ flex: 1 }}
+      behavior={Platform.OS === "ios" ? "padding" : undefined}
+    >
+      <ScrollView>
+        <ThemedView style={globalStyles.container}>
+          <ThemedText type="subtitle">{place ? "Edit Place" : "Add Place"}</ThemedText>
+          <ThemedView style={styles.buttonSpacer} />
 
-      <TextInput
-        style={styles.input}
-        placeholder="Name"
-        value={name}
-        onChangeText={setName}
-        placeholderTextColor={globalColors.placeholder}
-      />
+          <ThemedText>Name:</ThemedText>
+          <TextInput
+            style={styles.input}
+            placeholder="Name"
+            value={name}
+            onChangeText={setName}
+            placeholderTextColor={globalColors.placeholder}
+          />
 
-      <TextInput
-        style={styles.input}
-        placeholder="Category (e.g. Cafe, Park)"
-        value={category}
-        onChangeText={setCategory}
-        placeholderTextColor={globalColors.placeholder}
-      />
+          <ThemedText>Category:</ThemedText>
+          <TextInput
+            style={styles.input}
+            placeholder="Category (e.g. Cafe, Park)"
+            value={category}
+            onChangeText={setCategory}
+            placeholderTextColor={globalColors.placeholder}
+          />
 
-      <TextInput
-        style={styles.input}
-        placeholder="Location"
-        value={location}
-        onChangeText={setLocation}
-        placeholderTextColor={globalColors.placeholder}
-      />
+          <ThemedText>Location:</ThemedText>
+          <TextInput
+            style={styles.input}
+            placeholder="Location"
+            value={location}
+            onChangeText={setLocation}
+            placeholderTextColor={globalColors.placeholder}
+          />
+          <ActionButton
+            variant="primary"
+            style={styles.useLocationButton}
+            onPress={handleUseCurrentLocation}
+            testID="use-current-location-button"
+          >
+            Use Current Location
+          </ActionButton>
+          <ThemedText>Note:</ThemedText>
+          <TextInput
+            style={styles.largerInput}
+            placeholder="Note (optional)"
+            value={note}
+            onChangeText={setNote}
+            multiline={true}
+            textAlignVertical="top"
+            placeholderTextColor={globalColors.placeholder}
+          />
 
-      <TextInput
-        style={styles.largerInput}
-        placeholder="Note (optional)"
-        value={note}
-        onChangeText={setNote}
-        multiline={true}
-        textAlignVertical="top"
-        placeholderTextColor={globalColors.placeholder}
-      />
-
-      <PrimaryButton onPress={handleSubmit} testID="add-button">
-        {place ? "Update Place" : "Add Place"}
-      </PrimaryButton>
-    </ThemedView>
+          <PrimaryButton onPress={handleSubmit} testID="add-button">
+            {place ? "Update Place" : "Add Place"}
+          </PrimaryButton>
+        </ThemedView>
+      </ScrollView>
+    </KeyboardAvoidingView>
   );
 }
 
@@ -166,6 +239,11 @@ const styles = StyleSheet.create({
   largerInput: {
     ...baseInput,
     height: 100,
+  },
+  useLocationButton: {
+    ...baseInput,
+    alignItems: "center",
+    justifyContent: "center",
   },
   buttonSpacer: {
     height: 10,

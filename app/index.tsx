@@ -3,7 +3,7 @@ import PrimaryButton from "@/components/main/PrimaryButton";
 import { ThemedText } from "@/components/themed-text";
 import { ThemedView } from "@/components/themed-view";
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
-import { selectPlaces, selectUserId } from "@/store/placeSlice";
+import { selectPlaces, selectPlaceUserId } from "@/store/placeSlice";
 import { loadPlacesAsync } from "@/store/placeThunks";
 import { globalStyles } from "@/styles/globalStyles";
 import { useRouter } from "expo-router";
@@ -13,7 +13,7 @@ import { FlatList, StyleSheet } from "react-native";
 export default function HomeScreen() {
   const router = useRouter();
   const dispatch = useAppDispatch();
-  const userId = useAppSelector(selectUserId);
+  const userId = useAppSelector(selectPlaceUserId);
   const places = useAppSelector(selectPlaces);
 
   useEffect(() => {
