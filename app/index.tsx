@@ -29,7 +29,7 @@ export default function HomeScreen() {
     }
     // Remove session?.user?.id from dependency array to avoid running when it changes
     // This hook will now only run on mount and when dispatch changes (which it won't)
-  }, [dispatch]);
+  }, [dispatch, session?.user?.id]);
 
   return (
     <ThemedView style={globalStyles.container} testID="container">

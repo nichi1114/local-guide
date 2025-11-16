@@ -76,8 +76,8 @@ export default function AddEditScreen() {
   // Create states
   const [name, setName] = useState<string>(place?.name || "");
   const [category, setCategory] = useState<string>(place?.category || "");
-  const [location, setLocation] = useState<string>(place?.location.toString() || "");
-  const [note, setNote] = useState<string>(place?.note.toString() || "");
+  const [location, setLocation] = useState<string>(place?.location || "");
+  const [note, setNote] = useState<string>(place?.note || "");
 
   useEffect(() => {
     if (place) {
@@ -93,7 +93,6 @@ export default function AddEditScreen() {
     if (!coords) return;
 
     const address = await convertCoordsToAddress(coords.la, coords.long);
-    console.log(address);
     setLocation(address);
   };
 

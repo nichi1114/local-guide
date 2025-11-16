@@ -1,5 +1,6 @@
 import { Place } from "@/types/place";
 import { createSlice, PayloadAction } from "@reduxjs/toolkit";
+import { randomUUID } from "expo-crypto";
 import { RootState } from ".";
 import { loadPlacesAsync, savePlacesAsync } from "./placeThunks";
 
@@ -22,7 +23,7 @@ export const placeSlice = createSlice({
     },
     addPlace: (state, action: PayloadAction<Omit<Place, "id">>) => {
       const newOne: Place = {
-        id: Date.now().toString(),
+        id: randomUUID(),
         ...action.payload,
       };
       const newPlaces = [...state.places, newOne];
@@ -32,15 +33,7 @@ export const placeSlice = createSlice({
       const id = action.payload.id;
       const newPlace = action.payload.updated;
       const newPlaces = state.places.map((item) =>
-        item.id === id
-          ? {
-              ...item,
-              name: newPlace.name,
-              category: newPlace.category,
-              location: newPlace.location,
-              note: newPlace.note,
-            }
-          : item,
+        item.id === id ? { ...item, ...newPlace, id: item.id } : item,
       );
       state.places = newPlaces;
     },

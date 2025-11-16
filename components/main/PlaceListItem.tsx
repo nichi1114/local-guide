@@ -1,5 +1,6 @@
-import { AppDispatch, store } from "@/store";
-import { deletePlace } from "@/store/placeSlice";
+import { AppDispatch } from "@/store";
+import { useAppSelector } from "@/store/hooks";
+import { deletePlace, selectPlaceUserId } from "@/store/placeSlice";
 import { savePlacesAsync } from "@/store/placeThunks";
 import { Place } from "@/types/place";
 import { useRouter } from "expo-router";
@@ -18,13 +19,13 @@ type Props = {
 export default function PlaceListItem({ place }: Props) {
   const router = useRouter();
   const dispatch = useDispatch<AppDispatch>();
+  const userId = useAppSelector(selectPlaceUserId);
 
   const handleDelete = () => {
-    // udpate state
+    // update state
     dispatch(deletePlace(place.id));
 
     // save to storage
-    const { userId, places } = store.getState().poi;
     if (userId) {
       dispatch(savePlacesAsync(userId));
     }
