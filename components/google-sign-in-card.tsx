@@ -1,8 +1,8 @@
-import { ActivityIndicator, Pressable, StyleSheet, Text, View } from 'react-native';
+import { ActivityIndicator, Pressable, StyleSheet, Text, View } from "react-native";
 
-import { useGoogleAuthSession } from '@/hooks/use-google-auth-session';
-import { ThemedText } from '@/components/themed-text';
-import { ThemedView } from '@/components/themed-view';
+import { ThemedText } from "@/components/themed-text";
+import { ThemedView } from "@/components/themed-view";
+import { useGoogleAuthSession } from "@/hooks/use-google-auth-session";
 
 export function GoogleSignInCard() {
   const { signInWithGoogle, error, isLoading, session, ready, hasValidToken } =
@@ -11,9 +11,9 @@ export function GoogleSignInCard() {
   const sessionExpired = Boolean(session && !hasValidToken);
   const hasActiveSession = Boolean(session && hasValidToken);
   const errorMessage = sessionExpired
-    ? 'Session expired. Please sign in again.'
+    ? "Session expired. Please sign in again."
     : error
-      ? 'Sign-in failed. Please try again.'
+      ? "Sign-in failed. Please try again."
       : null;
 
   return (
@@ -32,7 +32,8 @@ export function GoogleSignInCard() {
           styles.button,
           (!ready || isLoading) && styles.buttonDisabled,
           pressed && styles.buttonPressed,
-        ]}>
+        ]}
+      >
         {isLoading ? (
           <ActivityIndicator color="#fff" accessibilityLabel="Signing in with Google" />
         ) : (
@@ -44,14 +45,15 @@ export function GoogleSignInCard() {
           style={styles.error}
           testID="google-auth-error"
           accessibilityRole="alert"
-          accessibilityLiveRegion="polite">
+          accessibilityLiveRegion="polite"
+        >
           {errorMessage}
         </Text>
       ) : null}
       {hasActiveSession ? (
         <View style={styles.sessionBox}>
           <ThemedText type="defaultSemiBold">
-            Signed in as {session.user.email ?? 'unknown'}
+            Signed in as {session?.user.email ?? "unknown"}
           </ThemedText>
         </View>
       ) : null}
@@ -71,9 +73,9 @@ const styles = StyleSheet.create({
   button: {
     height: 48,
     borderRadius: 8,
-    backgroundColor: '#1a73e8',
-    alignItems: 'center',
-    justifyContent: 'center',
+    backgroundColor: "#1a73e8",
+    alignItems: "center",
+    justifyContent: "center",
   },
   buttonDisabled: {
     opacity: 0.5,
@@ -82,16 +84,16 @@ const styles = StyleSheet.create({
     opacity: 0.85,
   },
   buttonLabel: {
-    color: '#fff',
+    color: "#fff",
     fontSize: 16,
-    fontWeight: '600',
+    fontWeight: "600",
   },
   error: {
-    color: '#d93025',
+    color: "#d93025",
   },
   sessionBox: {
     borderWidth: 1,
-    borderColor: '#e1e3e1',
+    borderColor: "#e1e3e1",
     borderRadius: 8,
     padding: 12,
     gap: 4,
