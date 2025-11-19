@@ -1,5 +1,5 @@
 // Reuse the Card component implementation from Assignment.
-import { useColorScheme } from "@/hooks/use-color-scheme.web";
+import { useColorScheme } from "@/hooks/use-color-scheme";
 import { StyleProp, StyleSheet, ViewProps, ViewStyle } from "react-native";
 import { ThemedView } from "../themed-view";
 
