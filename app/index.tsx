@@ -91,8 +91,7 @@ export default function HomeScreen() {
             styles.topButton,
             {
               backgroundColor: pressed ? globalColors.primaryPressed : globalColors.primary,
-            },
-            ,
+            }
           ]}
           onPress={scheduleNotification}
         >
