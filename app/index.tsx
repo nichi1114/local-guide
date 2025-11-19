@@ -103,7 +103,7 @@ export default function HomeScreen() {
       <ThemedView style={styles.buttonSpacer} />
       {!places || places.length === 0 ? (
         <ThemedText type="defaultSemiBold">
-          You haven&apos;t added any places yet. Click &apos;+&apos; to get started!
+          You haven&apos;t added any places yet. Click &apos;Add&apos; to get started!
         </ThemedText>
       ) : null}
       <FlatList
