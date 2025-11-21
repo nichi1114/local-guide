@@ -1,21 +1,19 @@
-import { DarkTheme, DefaultTheme, ThemeProvider } from '@react-navigation/native';
-import { Stack, usePathname, useRouter } from 'expo-router';
-import { StatusBar } from 'expo-status-bar';
-import 'react-native-reanimated';
-import { ActivityIndicator, View } from 'react-native';
-import { type ReactNode, useEffect, useRef } from 'react';
-import { Provider } from 'react-redux';
+import { DarkTheme, DefaultTheme, ThemeProvider } from "@react-navigation/native";
+import { Stack, usePathname, useRouter } from "expo-router";
+import { StatusBar } from "expo-status-bar";
+import { type ReactNode, useEffect, useRef } from "react";
+import { ActivityIndicator, View } from "react-native";
+import "react-native-reanimated";
+import { Provider } from "react-redux";
 
-import { useColorScheme } from '@/hooks/use-color-scheme';
-import { store } from '@/store';
-import { useAppDispatch, useAppSelector } from '@/store/hooks';
-import {
-  hydrateAuthSession,
-} from '@/store/authSlice';
-import { selectHasValidToken, selectIsHydratingAuth } from '@/store/authSelectors';
+import { useColorScheme } from "@/hooks/use-color-scheme";
+import { store } from "@/store";
+import { selectHasValidToken, selectIsHydratingAuth } from "@/store/authSelectors";
+import { hydrateAuthSession } from "@/store/authSlice";
+import { useAppDispatch, useAppSelector } from "@/store/hooks";
 
 export const unstable_settings = {
-  anchor: '(tabs)',
+  anchor: "(tabs)",
 };
 
 export default function RootLayout() {
@@ -24,11 +22,20 @@ export default function RootLayout() {
   return (
     <Provider store={store}>
       <AuthGate>
-        <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
-          <Stack>
-            <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-            <Stack.Screen name="modal" options={{ presentation: 'modal', title: 'Modal' }} />
-            <Stack.Screen name="login" options={{ title: 'Sign In' }} />
+        <ThemeProvider value={colorScheme === "dark" ? DarkTheme : DefaultTheme}>
+          <Stack
+            screenOptions={{
+              headerTitleStyle: {
+                fontWeight: "bold",
+              },
+              headerTitleAlign: "center",
+              headerBackTitle: "Back",
+            }}
+          >
+            <Stack.Screen name="login" options={{ title: "Sign In" }} />
+            <Stack.Screen name="index" options={{ title: "Home" }} />
+            <Stack.Screen name="add-edit" options={{ title: "" }} />
+            <Stack.Screen name="places/[id]" options={{ title: "Details" }} />
           </Stack>
           <StatusBar style="auto" />
         </ThemeProvider>
@@ -61,13 +68,13 @@ function AuthGate({ children }: { children: ReactNode }) {
     }
 
     const needsLogin = !hasValidToken;
-    const isOnLogin = pathname === '/login';
+    const isOnLogin = pathname === "/login";
 
     let targetRoute: string | null = null;
     if (needsLogin && !isOnLogin) {
-      targetRoute = '/login';
+      targetRoute = "/login";
     } else if (!needsLogin && isOnLogin) {
-      targetRoute = '/';
+      targetRoute = "/";
     }
 
     if (!targetRoute) {
@@ -88,7 +95,7 @@ function AuthGate({ children }: { children: ReactNode }) {
   if (isHydrating) {
     return (
       <View
-        style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}
+        style={{ flex: 1, alignItems: "center", justifyContent: "center" }}
         accessibilityRole="progressbar"
       >
         <ActivityIndicator accessibilityLabel="Loading authentication status" />
