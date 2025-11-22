@@ -161,7 +161,7 @@ async fn create_place(
         }
     }
 
-    if image_ids.len() != form.images.len() {
+    if !image_ids.is_empty() {
         return Err(missing_field("image_id for every image"));
     }
 
@@ -341,7 +341,7 @@ async fn update_place(
         }
     }
 
-    if image_ids.len() != incoming_images.len() {
+    if !image_ids.is_empty() {
         return Err(missing_field("image_id for every image"));
     }
 
