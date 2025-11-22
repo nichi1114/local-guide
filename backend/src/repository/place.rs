@@ -1,5 +1,5 @@
 use chrono::{DateTime, Utc};
-use sqlx::{Error as SqlxError, FromRow, PgPool, Postgres, Transaction};
+use sqlx::{Error as SqlxError, FromRow, PgPool};
 use thiserror::Error;
 use uuid::Uuid;
 
@@ -74,7 +74,6 @@ impl PlaceRepository {
         images: &[NewPlaceImage<'_>],
     ) -> RepoResult<(PlaceRecord, Vec<PlaceImageRecord>)> {
         let mut tx = self.pool.begin().await?;
-        set_session_user(&mut tx, payload.user_id).await?;
 
         let place = sqlx::query_as::<_, PlaceRecord>(
             r#"
@@ -117,7 +116,6 @@ impl PlaceRepository {
 
     pub async fn list_for_user(&self, user_id: Uuid) -> RepoResult<Vec<PlaceRecord>> {
         let mut tx = self.pool.begin().await?;
-        set_session_user(&mut tx, user_id).await?;
 
         let records = sqlx::query_as::<_, PlaceRecord>(
             r#"
@@ -142,7 +140,6 @@ impl PlaceRepository {
         place_id: Uuid,
     ) -> RepoResult<Option<PlaceRecord>> {
         let mut tx = self.pool.begin().await?;
-        set_session_user(&mut tx, user_id).await?;
 
         let record = sqlx::query_as::<_, PlaceRecord>(
             r#"
@@ -170,21 +167,21 @@ impl PlaceRepository {
         delete_image_ids: &[Uuid],
     ) -> RepoResult<(PlaceRecord, Vec<PlaceImageRecord>, Vec<PlaceImageRecord>)> {
         let mut tx = self.pool.begin().await?;
-        set_session_user(&mut tx, user_id).await?;
 
         let place = sqlx::query_as::<_, PlaceRecord>(
             r#"
             UPDATE places
-            SET name = COALESCE($2, name),
-                category = COALESCE($3, category),
-                location = COALESCE($4, location),
-                note = COALESCE($5, note),
+            SET name = COALESCE($3, name),
+                category = COALESCE($4, category),
+                location = COALESCE($5, location),
+                note = COALESCE($6, note),
                 updated_at = NOW()
-            WHERE id = $1
+            WHERE id = $1 AND user_id = $2
             RETURNING id, user_id, name, category, location, note, created_at, updated_at
             "#,
         )
         .bind(place_id)
+        .bind(user_id)
         .bind(update.name.as_deref())
         .bind(update.category.as_deref())
         .bind(update.location.as_deref())
@@ -197,11 +194,12 @@ impl PlaceRepository {
             deleted_images = sqlx::query_as::<_, PlaceImageRecord>(
                 r#"
                 DELETE FROM place_images
-                WHERE id = ANY($1)
+                WHERE id = ANY($1) AND place_id = $2
                 RETURNING id, place_id, file_name, caption, created_at
                 "#,
             )
             .bind(delete_image_ids)
+            .bind(place_id)
             .fetch_all(tx.as_mut())
             .await?;
         }
@@ -235,17 +233,18 @@ impl PlaceRepository {
         place_id: Uuid,
     ) -> RepoResult<Vec<PlaceImageRecord>> {
         let mut tx = self.pool.begin().await?;
-        set_session_user(&mut tx, user_id).await?;
 
         let records = sqlx::query_as::<_, PlaceImageRecord>(
             r#"
-            SELECT id, place_id, file_name, caption, created_at
-            FROM place_images
-            WHERE place_id = $1
-            ORDER BY created_at DESC
+            SELECT pi.id, pi.place_id, pi.file_name, pi.caption, pi.created_at
+            FROM place_images pi
+            JOIN places p ON p.id = pi.place_id
+            WHERE pi.place_id = $1 AND p.user_id = $2
+            ORDER BY pi.created_at DESC
             "#,
         )
         .bind(place_id)
+        .bind(user_id)
         .fetch_all(tx.as_mut())
         .await?;
 
@@ -260,16 +259,17 @@ impl PlaceRepository {
         image_id: Uuid,
     ) -> RepoResult<Option<PlaceImageRecord>> {
         let mut tx = self.pool.begin().await?;
-        set_session_user(&mut tx, user_id).await?;
 
         let record = sqlx::query_as::<_, PlaceImageRecord>(
             r#"
-            SELECT id, place_id, file_name, caption, created_at
-            FROM place_images
-            WHERE id = $1
+            SELECT pi.id, pi.place_id, pi.file_name, pi.caption, pi.created_at
+            FROM place_images pi
+            JOIN places p ON p.id = pi.place_id
+            WHERE pi.id = $1 AND p.user_id = $2
             "#,
         )
         .bind(image_id)
+        .bind(user_id)
         .fetch_optional(tx.as_mut())
         .await?;
 
@@ -277,15 +277,4 @@ impl PlaceRepository {
 
         Ok(record)
     }
-}
-
-async fn set_session_user(
-    tx: &mut Transaction<'_, Postgres>,
-    user_id: Uuid,
-) -> Result<(), PlaceRepositoryError> {
-    sqlx::query("SET LOCAL app.current_user = $1")
-        .bind(user_id.to_string())
-        .execute(tx.as_mut())
-        .await?;
-    Ok(())
 }

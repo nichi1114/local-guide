@@ -43,13 +43,6 @@ CREATE TABLE IF NOT EXISTS places (
 -- Index to speed up per-user lookups
 CREATE INDEX IF NOT EXISTS places_user_idx ON places (user_id);
 
--- Enforce per-user access at the database layer using row-level security.
-ALTER TABLE places ENABLE ROW LEVEL SECURITY;
-DROP POLICY IF EXISTS places_owner_policy ON places;
-CREATE POLICY places_owner_policy ON places
-USING (user_id = current_setting('app.current_user', true)::uuid)
-WITH CHECK (user_id = current_setting('app.current_user', true)::uuid);
-
 -- Table: place_images
 -- Stores multiple images per place. Files live on disk, only the file name is stored here.
 CREATE TABLE IF NOT EXISTS place_images (
@@ -61,23 +54,3 @@ CREATE TABLE IF NOT EXISTS place_images (
 );
 
 CREATE INDEX IF NOT EXISTS place_images_place_idx ON place_images (place_id);
-
-ALTER TABLE place_images ENABLE ROW LEVEL SECURITY;
-DROP POLICY IF EXISTS place_images_owner_policy ON place_images;
-CREATE POLICY place_images_owner_policy ON place_images
-USING (
-    EXISTS (
-        SELECT 1
-        FROM places p
-        WHERE p.id = place_images.place_id
-          AND p.user_id = current_setting('app.current_user', true)::uuid
-    )
-)
-WITH CHECK (
-    EXISTS (
-        SELECT 1
-        FROM places p
-        WHERE p.id = place_images.place_id
-          AND p.user_id = current_setting('app.current_user', true)::uuid
-    )
-);
