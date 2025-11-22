@@ -164,10 +164,12 @@ mod tests {
             .await
             .expect("failed to apply initialization SQL");
 
-        sqlx::query("TRUNCATE TABLE oauth_identities, places, users RESTART IDENTITY")
-            .execute(&pool)
-            .await
-            .expect("failed to truncate tables");
+        sqlx::query(
+            "TRUNCATE TABLE place_images, places, oauth_identities, users RESTART IDENTITY",
+        )
+        .execute(&pool)
+        .await
+        .expect("failed to truncate tables");
 
         pool
     }
