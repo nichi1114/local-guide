@@ -5,10 +5,12 @@ use crate::app_state::AppState;
 mod middleware;
 mod models;
 mod oauth;
+mod places;
 mod users;
 
 pub fn router(state: AppState) -> Router {
     Router::new()
         .merge(oauth::router(state.clone()))
-        .merge(users::router(state))
+        .merge(users::router(state.clone()))
+        .merge(places::router(state))
 }

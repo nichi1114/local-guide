@@ -5,7 +5,7 @@ edition = "2021"
 publish = false
 
 [dependencies]
-axum = "0.7.5"
+axum = { version = "0.7.5", features = ["multipart"] }
 chrono = { version = "0.4.38", features = ["serde"] }
 oauth2 = { version = "4.4.2", default-features = false, features = ["reqwest", "rustls-tls"] }
 reqwest = { version = "0.12.4", default-features = false, features = ["json", "rustls-tls"] }
@@ -19,6 +19,7 @@ tracing-subscriber = { version = "0.3.18", features = ["fmt", "env-filter"] }
 uuid = { version = "1.8.0", features = ["serde", "v4"] }
 jsonwebtoken = "9.3.0"
 dotenvy = "0.15.7"
+mime_guess = "2.0.4"
 
 [[bin]]
 name = "local-guide-backend"
@@ -30,3 +31,4 @@ tower = { version = "0.5", features = ["util"] }
 hyper = { version = "1", features = ["http1"] }
 http-body-util = "0.1"
 futures = "0.3"
+tempfile = "3.12.0"
