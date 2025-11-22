@@ -7,8 +7,6 @@ pub mod router {
     use crate::repository::image_store::ImageStore;
     use crate::repository::place::PlaceRepository;
     use crate::sql_init::run_initialization;
-    use axum::body::Body;
-    use axum::http::Request;
     use axum::response::Response;
     use axum::Router;
     use http_body_util::BodyExt;
@@ -17,7 +15,6 @@ pub mod router {
     use std::collections::HashMap;
     use std::path::Path;
     use tempfile::TempDir;
-    use tower::ServiceExt;
     use uuid::Uuid;
 
     pub const TEST_JWT_SECRET: &str = "secret";
@@ -28,7 +25,6 @@ pub mod router {
         pub jwt: JwtManager,
         temp_dir: TempDir,
         auth_repo: AuthRepository,
-        place_repo: PlaceRepository,
     }
 
     impl TestContext {
@@ -45,7 +41,7 @@ pub mod router {
                 providers,
                 jwt.clone(),
                 auth_repo.clone(),
-                place_repo.clone(),
+                place_repo,
                 image_store,
             );
 
@@ -57,7 +53,6 @@ pub mod router {
                 jwt,
                 temp_dir,
                 auth_repo,
-                place_repo,
             }
         }
 
@@ -67,10 +62,6 @@ pub mod router {
 
         pub fn auth_repo(&self) -> AuthRepository {
             self.auth_repo.clone()
-        }
-
-        pub fn place_repo(&self) -> PlaceRepository {
-            self.place_repo.clone()
         }
 
         pub async fn insert_user(&self) -> UserRecord {
@@ -91,14 +82,6 @@ pub mod router {
                 name: Some(name),
                 avatar_url: None,
             }
-        }
-
-        pub async fn send_request(&self, request: Request<Body>) -> Result<Response, axum::Error> {
-            self.app
-                .clone()
-                .oneshot(request)
-                .await
-                .map_err(axum::Error::new)
         }
     }
 
