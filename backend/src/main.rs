@@ -1,5 +1,6 @@
 use std::collections::HashMap;
 use std::num::ParseIntError;
+use std::path::PathBuf;
 
 use axum::Router;
 use thiserror::Error;
@@ -19,6 +20,7 @@ use auth_service::{AuthService, AuthServiceBuildError};
 use jwt::JwtManager;
 use oauth_config::{OAuthConfigError, OAuthProviderConfig};
 use repository::auth::AuthRepository;
+use repository::place::PlaceRepository;
 use sqlx::Error as SqlxError;
 
 const DEFAULT_ADDR: &str = "0.0.0.0:8080";
@@ -62,6 +64,7 @@ async fn run() -> Result<(), BackendError> {
     }
 
     let repository = AuthRepository::new(pool.clone());
+    let place_repository = PlaceRepository::new(pool.clone());
     let provider_configs = OAuthProviderConfig::load_from_env()?;
 
     let mut providers = HashMap::new();
@@ -83,7 +86,15 @@ async fn run() -> Result<(), BackendError> {
 
     let jwt_manager = JwtManager::new(jwt_secret, jwt_ttl_seconds);
 
-    let state = AppState::new(providers, jwt_manager, repository);
+    let place_image_dir = resolve_place_image_dir()?;
+
+    let state = AppState::new(
+        providers,
+        jwt_manager,
+        repository,
+        place_repository,
+        place_image_dir,
+    );
 
     let app = build_router(state);
 
@@ -112,6 +123,14 @@ fn resolve_listen_addr() -> String {
     DEFAULT_ADDR.to_string()
 }
 
+fn resolve_place_image_dir() -> Result<PathBuf, BackendError> {
+    let configured =
+        std::env::var("PLACE_IMAGE_DIR").unwrap_or_else(|_| "data/place_images".to_string());
+    let path = PathBuf::from(configured);
+    std::fs::create_dir_all(&path).map_err(BackendError::StartupIo)?;
+    Ok(path)
+}
+
 #[derive(Debug, Error)]
 enum BackendError {
     #[error(transparent)]
@@ -120,8 +139,8 @@ enum BackendError {
     AuthInit(#[from] AuthServiceBuildError),
     #[error(transparent)]
     Sqlx(#[from] SqlxError),
-    #[error(transparent)]
-    Io(#[from] std::io::Error),
+    #[error("failed to initialize image directory: {0}")]
+    StartupIo(#[from] std::io::Error),
     #[error(transparent)]
     Server(#[from] axum::Error),
     #[error("no OAuth providers configured")]

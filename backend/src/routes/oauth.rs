@@ -139,6 +139,7 @@ mod tests {
     use crate::jwt::JwtManager;
     use crate::oauth_config::OAuthProviderConfig;
     use crate::repository::auth::AuthRepository;
+    use crate::repository::place::PlaceRepository;
     use crate::sql_init::run_initialization;
     use axum::body::Body;
     use axum::http::Request;
@@ -249,7 +250,7 @@ mod tests {
             .expect("connect to postgres");
         run_initialization(&pool).await.expect("apply schema");
 
-        sqlx::query("TRUNCATE TABLE oauth_identities, users RESTART IDENTITY")
+        sqlx::query("TRUNCATE TABLE oauth_identities, places, users RESTART IDENTITY")
             .execute(&pool)
             .await
             .expect("truncate tables");
@@ -258,7 +259,8 @@ mod tests {
     }
 
     fn build_state(mock_server: &MockServer, pool: PgPool) -> AppState {
-        let repository = AuthRepository::new(pool);
+        let repository = AuthRepository::new(pool.clone());
+        let place_repository = PlaceRepository::new(pool);
         let config = OAuthProviderConfig {
             provider_id: "google".to_string(),
             client_id: "client-id".to_string(),
@@ -277,6 +279,14 @@ mod tests {
             providers,
             JwtManager::new(TEST_JWT_SECRET.to_string(), 3600),
             repository,
+            place_repository,
+            temp_image_dir(),
         )
+    }
+
+    fn temp_image_dir() -> std::path::PathBuf {
+        let path = std::env::temp_dir().join("local-guide-backend-tests");
+        std::fs::create_dir_all(&path).expect("create temp image dir");
+        path
     }
 }

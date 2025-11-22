@@ -206,7 +206,7 @@ mod tests {
             .expect("connect postgres");
         run_initialization(&pool).await.expect("apply schema");
 
-        sqlx::query("TRUNCATE TABLE oauth_identities, users RESTART IDENTITY")
+        sqlx::query("TRUNCATE TABLE oauth_identities, places, users RESTART IDENTITY")
             .execute(&pool)
             .await
             .expect("truncate tables");
