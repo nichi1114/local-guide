@@ -14,12 +14,15 @@ mod oauth_config;
 mod repository;
 mod routes;
 mod sql_init;
+#[cfg(test)]
+mod test_utils;
 
 use app_state::AppState;
 use auth_service::{AuthService, AuthServiceBuildError};
 use jwt::JwtManager;
 use oauth_config::{OAuthConfigError, OAuthProviderConfig};
 use repository::auth::AuthRepository;
+use repository::image_store::ImageStore;
 use repository::place::PlaceRepository;
 use sqlx::Error as SqlxError;
 
@@ -86,14 +89,15 @@ async fn run() -> Result<(), BackendError> {
 
     let jwt_manager = JwtManager::new(jwt_secret, jwt_ttl_seconds);
 
-    let place_image_dir = resolve_place_image_dir()?;
+    let place_image_dir = resolve_place_image_dir();
+    let image_store = ImageStore::new(place_image_dir).map_err(BackendError::StartupIo)?;
 
     let state = AppState::new(
         providers,
         jwt_manager,
         repository,
         place_repository,
-        place_image_dir,
+        image_store,
     );
 
     let app = build_router(state);
@@ -123,12 +127,10 @@ fn resolve_listen_addr() -> String {
     DEFAULT_ADDR.to_string()
 }
 
-fn resolve_place_image_dir() -> Result<PathBuf, BackendError> {
+fn resolve_place_image_dir() -> PathBuf {
     let configured =
         std::env::var("PLACE_IMAGE_DIR").unwrap_or_else(|_| "data/place_images".to_string());
-    let path = PathBuf::from(configured);
-    std::fs::create_dir_all(&path).map_err(BackendError::StartupIo)?;
-    Ok(path)
+    PathBuf::from(configured)
 }
 
 #[derive(Debug, Error)]

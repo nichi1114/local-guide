@@ -40,6 +40,7 @@ impl ErrorResponse {
     }
 }
 
+#[cfg_attr(test, derive(serde::Deserialize))]
 #[derive(Serialize)]
 pub struct PlaceResponse {
     pub id: Uuid,
@@ -69,6 +70,7 @@ impl From<PlaceRecord> for PlaceResponse {
     }
 }
 
+#[cfg_attr(test, derive(serde::Deserialize))]
 #[derive(Serialize)]
 pub struct PlaceImageResponse {
     pub id: Uuid,

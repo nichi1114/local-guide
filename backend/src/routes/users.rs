@@ -58,29 +58,31 @@ fn internal_error() -> (StatusCode, Json<ErrorResponse>) {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::app_state::AppState;
-    use crate::db::create_pool;
-    use crate::jwt::JwtManager;
-    use crate::repository::auth::{AuthRepository, IdentityProfile, UserRecord};
-    use crate::repository::place::PlaceRepository;
-    use crate::sql_init::run_initialization;
+    use crate::repository::auth::IdentityProfile;
+    use crate::test_utils::router::{parse_json, TestContext};
     use axum::body::Body;
     use axum::http::Request;
-    use http_body_util::BodyExt;
-    use sqlx::PgPool;
-    use std::collections::HashMap;
     use tower::ServiceExt;
-
-    const TEST_JWT_SECRET: &str = "secret";
 
     #[tokio::test]
     async fn returns_user_when_token_valid() {
-        let pool = setup_pool().await;
-        let (app, jwt, user) = build_app(pool).await;
+        let ctx = TestContext::new(super::router).await;
+        let repo = ctx.auth_repo();
+        let user = repo
+            .upsert_user_with_identity(IdentityProfile {
+                provider: "google",
+                provider_user_id: "user-123",
+                email: Some("user@example.com"),
+                name: Some("Test User"),
+                avatar_url: None,
+            })
+            .await
+            .expect("insert user");
 
-        let token = jwt.generate(&user).expect("jwt");
+        let token = ctx.jwt.generate(&user).expect("jwt");
 
-        let response = app
+        let response = ctx
+            .app
             .oneshot(
                 Request::get("/usr")
                     .header("Authorization", format!("Bearer {}", token))
@@ -92,8 +94,7 @@ mod tests {
 
         assert_eq!(response.status(), StatusCode::OK);
 
-        let body = response.into_body().collect().await.unwrap().to_bytes();
-        let parsed: UserResponse = serde_json::from_slice(&body).expect("parse user");
+        let parsed: UserResponse = parse_json(response).await;
         assert_eq!(parsed.id, user.id);
         assert_eq!(parsed.email, user.email);
         assert_eq!(parsed.name, user.name);
@@ -101,68 +102,13 @@ mod tests {
 
     #[tokio::test]
     async fn returns_unauthorized_without_header() {
-        let pool = setup_pool().await;
-        let (app, _, _) = build_app(pool).await;
-
-        let response = app
+        let ctx = TestContext::new(super::router).await;
+        let response = ctx
+            .app
             .oneshot(Request::get("/usr").body(Body::empty()).unwrap())
             .await
             .expect("request succeeds");
 
         assert_eq!(response.status(), StatusCode::UNAUTHORIZED);
-    }
-
-    async fn build_app(pool: PgPool) -> (Router, JwtManager, UserRecord) {
-        let repository = AuthRepository::new(pool.clone());
-        let place_repository = PlaceRepository::new(pool);
-        let jwt = JwtManager::new(TEST_JWT_SECRET.to_string(), 3600);
-
-        let user = repository
-            .upsert_user_with_identity(IdentityProfile {
-                provider: "google",
-                provider_user_id: "user-123",
-                email: Some("user@example.com"),
-                name: Some("Test User"),
-                avatar_url: None,
-            })
-            .await
-            .expect("insert user");
-
-        let providers = HashMap::new();
-        let image_dir = temp_image_dir();
-        let app_state = AppState::new(
-            providers,
-            jwt.clone(),
-            repository,
-            place_repository,
-            image_dir,
-        );
-        (super::router(app_state), jwt, user)
-    }
-
-    async fn setup_pool() -> PgPool {
-        let database_url = std::env::var("TEST_DATABASE_URL")
-            .or_else(|_| std::env::var("DATABASE_URL"))
-            .unwrap_or_else(|_| {
-                "postgres://postgres:postgres@localhost:5432/local_guide_test".into()
-            });
-
-        let pool = create_pool(&database_url)
-            .await
-            .expect("connect to postgres");
-        run_initialization(&pool).await.expect("apply schema");
-
-        sqlx::query("TRUNCATE TABLE oauth_identities, places, users RESTART IDENTITY")
-            .execute(&pool)
-            .await
-            .expect("truncate tables");
-
-        pool
-    }
-
-    fn temp_image_dir() -> std::path::PathBuf {
-        let path = std::env::temp_dir().join("local-guide-backend-tests");
-        std::fs::create_dir_all(&path).expect("create temp image dir");
-        path
     }
 }

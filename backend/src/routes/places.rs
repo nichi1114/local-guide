@@ -1,5 +1,4 @@
 use std::collections::VecDeque;
-use std::path::{Path, PathBuf};
 
 use axum::{
     extract::{multipart::Multipart, Extension, Path as AxumPath, State},
@@ -10,12 +9,12 @@ use axum::{
     Json, Router,
 };
 use mime_guess::mime;
-use tokio::fs;
 use tracing::error;
 use uuid::Uuid;
 
 use crate::app_state::AppState;
 use crate::jwt::JwtClaims;
+use crate::repository::image_store::ImageUpload;
 use crate::repository::place::{
     NewPlace, NewPlaceImage, PlaceRecord, PlaceRepository, PlaceRepositoryError, UpdatePlace,
 };
@@ -171,11 +170,17 @@ async fn create_place(
     let category = form.category.ok_or_else(|| missing_field("category"))?;
     let location = form.location.ok_or_else(|| missing_field("location"))?;
 
-    let image_dir = state.place_image_dir();
-
     let repository = state.place_repository();
+    let image_store = state.image_store();
 
-    let stored_images = store_images_to_disk(place_id, &image_dir, form.images).await?;
+    let uploads = prepare_uploads(form.images)?;
+    let stored_images = image_store
+        .save_images(place_id, uploads)
+        .await
+        .map_err(|err| {
+            error!(?err, "failed to persist place images");
+            image_io_error("could not store image file")
+        })?;
 
     let new_place = NewPlace {
         id: place_id,
@@ -203,7 +208,7 @@ async fn create_place(
         Ok(result) => result,
         Err(err) => {
             error!(?err, "failed to create place");
-            cleanup_files(&stored_images).await;
+            image_store.cleanup_images(place_id, &stored_images).await;
             return Err(internal_error());
         }
     };
@@ -340,8 +345,19 @@ async fn update_place(
         return Err(missing_field("image_id for every image"));
     }
 
-    let image_dir = state.place_image_dir();
-    let stored_images = store_images_to_disk(place_id, &image_dir, incoming_images).await?;
+    let image_store = state.image_store();
+    let uploads = prepare_uploads(incoming_images)?;
+    let stored_images = if uploads.is_empty() {
+        Vec::new()
+    } else {
+        image_store
+            .save_images(place_id, uploads)
+            .await
+            .map_err(|err| {
+                error!(?err, "failed to persist images during update");
+                image_io_error("could not store image file")
+            })?
+    };
 
     let new_image_payloads: Vec<NewPlaceImage<'_>> = stored_images
         .iter()
@@ -366,20 +382,18 @@ async fn update_place(
         Ok(result) => result,
         Err(err) => {
             error!(?err, "failed to update place");
-            cleanup_files(&stored_images).await;
+            image_store.cleanup_images(place_id, &stored_images).await;
             return Err(internal_error());
         }
     };
 
-    // Remove files for deleted images.
-    for deleted in &deleted_images {
-        let path = image_dir
-            .join(place_id.to_string())
-            .join(&deleted.file_name);
-        if let Err(err) = fs::remove_file(&path).await {
-            error!(?err, ?path, "failed to remove deleted image file");
-        }
-    }
+    let deleted_file_names: Vec<String> = deleted_images
+        .iter()
+        .map(|img| img.file_name.clone())
+        .collect();
+    image_store
+        .remove_files(place_id, &deleted_file_names)
+        .await;
 
     // Build response with current images.
     let images = load_images_for_place(&repository, claims.sub, place_id)
@@ -437,17 +451,16 @@ async fn get_place_image(
         return Err(place_not_found());
     }
 
-    let image_dir = state.place_image_dir();
-    let full_path = image_dir.join(Path::new(&format!(
-        "{}/{}",
-        image.place_id, image.file_name
-    )));
-    let bytes = fs::read(&full_path).await.map_err(|err| {
-        error!(?err, ?full_path, "failed to read image from disk");
-        image_io_error("could not read image file")
-    })?;
+    let image_store = state.image_store();
+    let bytes = image_store
+        .get_image(place_id, &image.file_name)
+        .await
+        .map_err(|err| {
+            error!(?err, "failed to read image from disk");
+            image_io_error("could not read image file")
+        })?;
 
-    let mime = mime_guess::from_path(&full_path).first_or(mime::APPLICATION_OCTET_STREAM);
+    let mime = mime_guess::from_path(&image.file_name).first_or(mime::APPLICATION_OCTET_STREAM);
 
     let mut headers = HeaderMap::new();
     headers.insert(
@@ -473,45 +486,10 @@ async fn load_images_for_place(
     Ok(images)
 }
 
-async fn cleanup_files(paths: &[StoredImage]) {
-    for stored in paths {
-        if let Err(err) = fs::remove_file(&stored.path).await {
-            error!(?err, path = ?stored.path, "failed to cleanup image file after error");
-        }
-    }
-}
-
 fn enrich_place(place: PlaceRecord, images: Vec<PlaceImageResponse>) -> PlaceResponse {
     let mut response = PlaceResponse::from(place);
     response.images = images;
     response
-}
-
-async fn save_place_image(
-    place_id: Uuid,
-    image_id: Uuid,
-    base_dir: &Path,
-    file_name: Option<&str>,
-    bytes: &[u8],
-) -> Result<String, std::io::Error> {
-    let place_dir = base_dir.join(place_id.to_string());
-    fs::create_dir_all(&place_dir).await?;
-
-    let extension = file_name
-        .and_then(|name| Path::new(name).extension())
-        .and_then(|ext| ext.to_str())
-        .map(|ext| format!(".{}", ext));
-
-    let stored_file_name = format!(
-        "{}{}",
-        image_id,
-        extension.unwrap_or_else(|| String::from(""))
-    );
-
-    let full_path = place_dir.join(&stored_file_name);
-    fs::write(full_path, bytes).await?;
-
-    Ok(stored_file_name)
 }
 
 fn missing_field(field: &'static str) -> (StatusCode, Json<ErrorResponse>) {
@@ -578,53 +556,6 @@ fn place_not_found() -> (StatusCode, Json<ErrorResponse>) {
     )
 }
 
-struct StoredImage {
-    id: Uuid,
-    file_name: String,
-    path: PathBuf,
-}
-
-async fn store_images_to_disk(
-    place_id: Uuid,
-    base_dir: &PathBuf,
-    incoming: Vec<IncomingImage>,
-) -> Result<Vec<StoredImage>, (StatusCode, Json<ErrorResponse>)> {
-    let mut stored = Vec::new();
-    for image in incoming {
-        let image_id = image
-            .id
-            .ok_or_else(|| missing_field("image_id before each image"))?;
-
-        let stored_file_name = match save_place_image(
-            place_id,
-            image_id,
-            base_dir.as_ref(),
-            image.file_name.as_deref(),
-            &image.bytes,
-        )
-        .await
-        {
-            Ok(name) => name,
-            Err(err) => {
-                error!(?err, "failed to persist place image");
-                cleanup_files(&stored).await;
-                return Err(image_io_error("could not store image file"));
-            }
-        };
-
-        let path = base_dir
-            .join(place_id.to_string())
-            .join(stored_file_name.clone());
-        stored.push(StoredImage {
-            id: image_id,
-            file_name: stored_file_name,
-            path,
-        });
-    }
-
-    Ok(stored)
-}
-
 fn internal_error() -> (StatusCode, Json<ErrorResponse>) {
     (
         StatusCode::INTERNAL_SERVER_ERROR,
@@ -633,4 +564,292 @@ fn internal_error() -> (StatusCode, Json<ErrorResponse>) {
             "unexpected server error",
         )),
     )
+}
+
+fn prepare_uploads(
+    incoming: Vec<IncomingImage>,
+) -> Result<Vec<ImageUpload>, (StatusCode, Json<ErrorResponse>)> {
+    let mut uploads = Vec::new();
+    for image in incoming {
+        let image_id = image
+            .id
+            .ok_or_else(|| missing_field("image_id before each image"))?;
+        uploads.push(ImageUpload {
+            id: image_id,
+            file_name: image.file_name,
+            bytes: image.bytes,
+        });
+    }
+    Ok(uploads)
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use axum::body::Body;
+    use axum::http::{header, Request};
+    use tower::ServiceExt;
+
+    use crate::test_utils::router::{multipart_body, parse_json, Part, TestContext};
+
+    #[tokio::test]
+    async fn create_list_get_and_fetch_image() {
+        let ctx = TestContext::new(super::router).await;
+        let user = ctx.insert_user().await;
+        let token = ctx.jwt.generate(&user).expect("jwt");
+
+        let place_id = Uuid::new_v4();
+        let image_id = Uuid::new_v4();
+        let (boundary, body) = multipart_body(vec![
+            Part::text("id", place_id.to_string()),
+            Part::text("name", "Blue Bottle"),
+            Part::text("category", "Coffee"),
+            Part::text("location", "Oakland"),
+            Part::text("note", "Try the latte"),
+            Part::text("image_id", image_id.to_string()),
+            Part::file("image", "image.jpg", "image/jpeg", b"IMG".to_vec()),
+        ]);
+
+        let response = ctx
+            .app
+            .clone()
+            .oneshot(
+                Request::post("/places")
+                    .header("Authorization", format!("Bearer {}", token))
+                    .header(
+                        header::CONTENT_TYPE,
+                        format!("multipart/form-data; boundary={boundary}"),
+                    )
+                    .body(Body::from(body))
+                    .unwrap(),
+            )
+            .await
+            .expect("request succeeds");
+        assert_eq!(response.status(), StatusCode::OK);
+        let place: PlaceResponse = parse_json(response).await;
+        assert_eq!(place.id, place_id);
+        assert_eq!(place.images.len(), 1);
+
+        let list_response = ctx
+            .app
+            .clone()
+            .oneshot(
+                Request::get("/places")
+                    .header("Authorization", format!("Bearer {}", token))
+                    .body(Body::empty())
+                    .unwrap(),
+            )
+            .await
+            .expect("list request");
+        assert_eq!(list_response.status(), StatusCode::OK);
+        let places: Vec<PlaceResponse> = parse_json(list_response).await;
+        assert_eq!(places.len(), 1);
+
+        let get_response = ctx
+            .app
+            .clone()
+            .oneshot(
+                Request::get(format!("/places/{place_id}"))
+                    .header("Authorization", format!("Bearer {}", token))
+                    .body(Body::empty())
+                    .unwrap(),
+            )
+            .await
+            .expect("get request");
+        assert_eq!(get_response.status(), StatusCode::OK);
+
+        let image_resp = ctx
+            .app
+            .clone()
+            .oneshot(
+                Request::get(format!("/places/{place_id}/images/{image_id}"))
+                    .header("Authorization", format!("Bearer {}", token))
+                    .body(Body::empty())
+                    .unwrap(),
+            )
+            .await
+            .expect("image request");
+        assert_eq!(image_resp.status(), StatusCode::OK);
+
+        let file_name: String =
+            sqlx::query_scalar("SELECT file_name FROM place_images WHERE id = $1")
+                .bind(image_id)
+                .fetch_one(&ctx.pool)
+                .await
+                .unwrap();
+        let expected_path = ctx.image_dir().join(place_id.to_string()).join(&file_name);
+        assert!(expected_path.exists(), "image file should exist");
+    }
+
+    #[tokio::test]
+    async fn update_place_adds_and_deletes_images() {
+        let ctx = TestContext::new(super::router).await;
+        let user = ctx.insert_user().await;
+        let token = ctx.jwt.generate(&user).expect("jwt");
+
+        let place_id = Uuid::new_v4();
+        let original_image_id = Uuid::new_v4();
+        create_place_for_test(&ctx, &token, place_id, original_image_id).await;
+
+        let original_file: String =
+            sqlx::query_scalar("SELECT file_name FROM place_images WHERE id = $1")
+                .bind(original_image_id)
+                .fetch_one(&ctx.pool)
+                .await
+                .unwrap();
+
+        let new_image_id = Uuid::new_v4();
+        let delete_payload = serde_json::to_string(&vec![original_image_id.to_string()]).unwrap();
+        let (boundary, body) = multipart_body(vec![
+            Part::text("name", "Updated Name"),
+            Part::text("delete_image_ids", delete_payload),
+            Part::text("image_id", new_image_id.to_string()),
+            Part::file("image", "new.jpg", "image/jpeg", b"NEW".to_vec()),
+        ]);
+
+        let response = ctx
+            .app
+            .clone()
+            .oneshot(
+                Request::patch(format!("/places/{place_id}"))
+                    .header("Authorization", format!("Bearer {}", token))
+                    .header(
+                        header::CONTENT_TYPE,
+                        format!("multipart/form-data; boundary={boundary}"),
+                    )
+                    .body(Body::from(body))
+                    .unwrap(),
+            )
+            .await
+            .expect("update request");
+        assert_eq!(response.status(), StatusCode::OK);
+        let updated: PlaceResponse = parse_json(response).await;
+        assert_eq!(updated.name, "Updated Name");
+        assert_eq!(updated.images.len(), 1);
+        assert_eq!(updated.images[0].id, new_image_id);
+
+        let old_file: Option<String> =
+            sqlx::query_scalar("SELECT file_name FROM place_images WHERE id = $1")
+                .bind(original_image_id)
+                .fetch_optional(&ctx.pool)
+                .await
+                .unwrap();
+        assert!(old_file.is_none());
+
+        let new_file: String =
+            sqlx::query_scalar("SELECT file_name FROM place_images WHERE id = $1")
+                .bind(new_image_id)
+                .fetch_one(&ctx.pool)
+                .await
+                .unwrap();
+        let new_path = ctx.image_dir().join(place_id.to_string()).join(&new_file);
+        assert!(new_path.exists());
+
+        let old_path = ctx
+            .image_dir()
+            .join(place_id.to_string())
+            .join(&original_file);
+        assert!(!old_path.exists());
+    }
+
+    #[tokio::test]
+    async fn user_cannot_access_foreign_place_or_image() {
+        let ctx = TestContext::new(super::router).await;
+        let owner = ctx.insert_user().await;
+        let owner_token = ctx.jwt.generate(&owner).expect("jwt");
+        let intruder = ctx.insert_user().await;
+        let intruder_token = ctx.jwt.generate(&intruder).expect("jwt");
+
+        let place_id = Uuid::new_v4();
+        let image_id = Uuid::new_v4();
+        create_place_for_test(&ctx, &owner_token, place_id, image_id).await;
+
+        let forbidden_place = ctx
+            .app
+            .clone()
+            .oneshot(
+                Request::get(format!("/places/{place_id}"))
+                    .header("Authorization", format!("Bearer {}", intruder_token))
+                    .body(Body::empty())
+                    .unwrap(),
+            )
+            .await
+            .expect("intruder place request");
+        assert_eq!(forbidden_place.status(), StatusCode::NOT_FOUND);
+
+        let forbidden_image = ctx
+            .app
+            .clone()
+            .oneshot(
+                Request::get(format!("/places/{place_id}/images/{image_id}"))
+                    .header("Authorization", format!("Bearer {}", intruder_token))
+                    .body(Body::empty())
+                    .unwrap(),
+            )
+            .await
+            .expect("intruder image request");
+        assert_eq!(forbidden_image.status(), StatusCode::NOT_FOUND);
+    }
+
+    #[tokio::test]
+    async fn create_place_rejects_missing_image_ids() {
+        let ctx = TestContext::new(super::router).await;
+        let user = ctx.insert_user().await;
+        let token = ctx.jwt.generate(&user).expect("jwt");
+        let place_id = Uuid::new_v4();
+
+        let (boundary, body) = multipart_body(vec![
+            Part::text("id", place_id.to_string()),
+            Part::text("name", "No Image Id"),
+            Part::text("category", "Test"),
+            Part::text("location", "Nowhere"),
+            Part::text("note", "bad"),
+            Part::file("image", "bad.jpg", "image/jpeg", b"BYTES".to_vec()),
+        ]);
+
+        let response = ctx
+            .app
+            .clone()
+            .oneshot(
+                Request::post("/places")
+                    .header("Authorization", format!("Bearer {}", token))
+                    .header(
+                        header::CONTENT_TYPE,
+                        format!("multipart/form-data; boundary={boundary}"),
+                    )
+                    .body(Body::from(body))
+                    .unwrap(),
+            )
+            .await
+            .expect("request succeeds");
+        assert_eq!(response.status(), StatusCode::BAD_REQUEST);
+    }
+
+    async fn create_place_for_test(ctx: &TestContext, token: &str, place_id: Uuid, image_id: Uuid) {
+        let (boundary, body) = multipart_body(vec![
+            Part::text("id", place_id.to_string()),
+            Part::text("name", "Sample"),
+            Part::text("category", "Coffee"),
+            Part::text("location", "Somewhere"),
+            Part::text("image_id", image_id.to_string()),
+            Part::file("image", "orig.jpg", "image/jpeg", vec![1, 2, 3]),
+        ]);
+
+        let response = ctx
+            .app
+            .clone()
+            .oneshot(
+                Request::post("/places")
+                    .header("Authorization", format!("Bearer {}", token))
+                    .header(
+                        header::CONTENT_TYPE,
+                        format!("multipart/form-data; boundary={boundary}"),
+                    )
+                    .body(Body::from(body))
+                    .unwrap(),
+            )
+            .await
+            .expect("create request");
+        assert_eq!(response.status(), StatusCode::OK);
+    }
 }

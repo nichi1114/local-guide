@@ -1,10 +1,10 @@
 use std::collections::HashMap;
-use std::path::PathBuf;
 use std::sync::Arc;
 
 use crate::auth_service::AuthService;
 use crate::jwt::JwtManager;
 use crate::repository::auth::AuthRepository;
+use crate::repository::image_store::ImageStore;
 use crate::repository::place::PlaceRepository;
 
 #[derive(Clone)]
@@ -13,7 +13,7 @@ pub struct AppState {
     jwt_manager: Arc<JwtManager>,
     auth_repository: AuthRepository,
     place_repository: PlaceRepository,
-    place_image_dir: Arc<PathBuf>,
+    image_store: ImageStore,
 }
 
 impl AppState {
@@ -22,14 +22,14 @@ impl AppState {
         jwt_manager: JwtManager,
         auth_repository: AuthRepository,
         place_repository: PlaceRepository,
-        place_image_dir: PathBuf,
+        image_store: ImageStore,
     ) -> Self {
         Self {
             auth_providers: Arc::new(auth_providers),
             jwt_manager: Arc::new(jwt_manager),
             auth_repository,
             place_repository,
-            place_image_dir: Arc::new(place_image_dir),
+            image_store,
         }
     }
 
@@ -49,7 +49,7 @@ impl AppState {
         self.place_repository.clone()
     }
 
-    pub fn place_image_dir(&self) -> Arc<PathBuf> {
-        self.place_image_dir.clone()
+    pub fn image_store(&self) -> ImageStore {
+        self.image_store.clone()
     }
 }
