@@ -10,6 +10,13 @@ module.exports = defineConfig([
   {
     files: ["**/*.js", "**/*.ts", "**/*.tsx"],
     rules: {
+      quotes: [
+        "error",
+        "double",
+        {
+          avoidEscape: true,
+        },
+      ],
       "max-len": [
         "error",
         {
