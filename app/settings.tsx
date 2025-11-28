@@ -15,16 +15,32 @@ export default function SettingsScreen() {
   const dispatch = useAppDispatch();
   const router = useRouter();
   const session = useAppSelector(selectAuthSession);
+  const REMINDER_ID = "daily-reminder";
+  const reminderContent = {
+    title: "Daily Reminder",
+    body: "Discover something new? Log your place of interest!",
+  };
 
   const [notificationsEnabled, setNotificationsEnabled] = useState(false);
   const [isCheckingNotifications, setIsCheckingNotifications] = useState(true);
   const [isUpdatingNotifications, setIsUpdatingNotifications] = useState(false);
 
+  const isReminderScheduled = async () => {
+    const scheduled = await Notifications.getAllScheduledNotificationsAsync();
+    return scheduled.some((notification) => notification.content.data?.reminderId === REMINDER_ID);
+  };
+
   useEffect(() => {
     const fetchPermissions = async () => {
       try {
         const permissions = await Notifications.getPermissionsAsync();
-        setNotificationsEnabled(permissions.granted);
+        if (!permissions.granted) {
+          setNotificationsEnabled(false);
+          return;
+        }
+
+        const hasReminder = await isReminderScheduled();
+        setNotificationsEnabled(hasReminder);
       } catch (error) {
         console.warn("Failed to read notification permissions", error);
       } finally {
@@ -75,8 +91,8 @@ export default function SettingsScreen() {
       await Notifications.cancelAllScheduledNotificationsAsync();
       await Notifications.scheduleNotificationAsync({
         content: {
-          title: "Daily Reminder",
-          body: "Discover something new? Log your place of interest!",
+          ...reminderContent,
+          data: { reminderId: REMINDER_ID },
         },
         trigger: {
           hour: 9,
@@ -84,7 +100,8 @@ export default function SettingsScreen() {
           repeats: true,
         },
       });
-      setNotificationsEnabled(true);
+      const hasReminder = await isReminderScheduled();
+      setNotificationsEnabled(hasReminder);
     } catch (error) {
       console.warn("Failed to update notification preference", error);
       Alert.alert("Error", "We could not update notification settings. Please try again.");
