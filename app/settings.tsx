@@ -48,9 +48,16 @@ export default function SettingsScreen() {
   const handleToggleNotifications = async (value: boolean) => {
     setIsUpdatingNotifications(true);
     if (!value) {
-      await Notifications.cancelAllScheduledNotificationsAsync();
-      setNotificationsEnabled(false);
-      setIsUpdatingNotifications(false);
+      try {
+        await Notifications.cancelAllScheduledNotificationsAsync();
+        setNotificationsEnabled(false);
+      } catch (error) {
+        console.warn("Failed to cancel notifications when disabling", error);
+        Alert.alert("Error", "Could not disable notifications. Please try again.");
+        setNotificationsEnabled(true);
+      } finally {
+        setIsUpdatingNotifications(false);
+      }
       return;
     }
 
