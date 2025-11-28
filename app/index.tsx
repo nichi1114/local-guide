@@ -39,13 +39,6 @@ export default function HomeScreen() {
     }
   }, [dispatch, session?.user?.id]);
 
-  useEffect(() => {
-    const subscription = Notifications.addNotificationResponseReceivedListener((response) => {
-      console.log("User tapped notification:", response.notification.request.content);
-    });
-    return () => subscription.remove();
-  }, []);
-
   return (
     <ThemedView style={globalStyles.container} testID="container">
       <ThemedView style={styles.row}>
