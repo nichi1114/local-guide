@@ -57,8 +57,14 @@ export default function SettingsScreen() {
     } catch (error) {
       console.warn("Failed to cancel notifications during logout", error);
     }
-    await dispatch(clearAuthSession()).unwrap();
-    router.replace("/login");
+
+    try {
+      await dispatch(clearAuthSession()).unwrap();
+    } catch (error) {
+      console.warn("Failed to clear auth session from storage", error);
+    } finally {
+      router.replace("/login");
+    }
   };
 
   const handleToggleNotifications = async (value: boolean) => {
