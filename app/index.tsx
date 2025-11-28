@@ -10,7 +10,7 @@ import { globalStyles } from "@/styles/globalStyles";
 import * as Notifications from "expo-notifications";
 import { useRouter } from "expo-router";
 import { useEffect } from "react";
-import { Alert, FlatList, Pressable, StyleSheet } from "react-native";
+import { FlatList, Pressable, StyleSheet } from "react-native";
 
 Notifications.setNotificationHandler({
   handleNotification: async () => ({
@@ -40,36 +40,11 @@ export default function HomeScreen() {
   }, [dispatch, session?.user?.id]);
 
   useEffect(() => {
-    registerForNotifications();
-  }, []);
-
-  useEffect(() => {
     const subscription = Notifications.addNotificationResponseReceivedListener((response) => {
       console.log("User tapped notification:", response.notification.request.content);
     });
     return () => subscription.remove();
   }, []);
-
-  async function registerForNotifications() {
-    const { status } = await Notifications.requestPermissionsAsync();
-    if (status !== "granted") {
-      Alert.alert("Permission denied.");
-      return;
-    }
-  }
-
-  async function scheduleNotification() {
-    await Notifications.scheduleNotificationAsync({
-      content: {
-        title: "Daily Reminder",
-        body: "Discover something new? Log your place of interest!",
-      },
-      trigger: {
-        type: Notifications.SchedulableTriggerInputTypes.TIME_INTERVAL,
-        seconds: 5, // for testing
-      },
-    });
-  }
 
   return (
     <ThemedView style={globalStyles.container} testID="container">
@@ -91,11 +66,11 @@ export default function HomeScreen() {
             styles.topButton,
             {
               backgroundColor: pressed ? globalColors.primaryPressed : globalColors.primary,
-            }
+            },
           ]}
-          onPress={scheduleNotification}
+          onPress={() => router.push("/settings")}
         >
-          <ThemedText type="defaultSemiBold">Schedule Notification</ThemedText>
+          <ThemedText type="defaultSemiBold">Account</ThemedText>
         </Pressable>
       </ThemedView>
 

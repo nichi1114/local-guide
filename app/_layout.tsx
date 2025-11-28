@@ -1,4 +1,5 @@
 import { DarkTheme, DefaultTheme, ThemeProvider } from "@react-navigation/native";
+import * as Notifications from "expo-notifications";
 import { Stack, usePathname, useRouter } from "expo-router";
 import { StatusBar } from "expo-status-bar";
 import { type ReactNode, useEffect, useRef } from "react";
@@ -18,6 +19,14 @@ export const unstable_settings = {
 
 export default function RootLayout() {
   const colorScheme = useColorScheme();
+  const router = useRouter();
+
+  useEffect(() => {
+    const subscription = Notifications.addNotificationResponseReceivedListener(() => {
+      router.replace("/");
+    });
+    return () => subscription.remove();
+  }, [router]);
 
   return (
     <Provider store={store}>
@@ -35,6 +44,7 @@ export default function RootLayout() {
             <Stack.Screen name="login" options={{ title: "Sign In" }} />
             <Stack.Screen name="index" options={{ title: "Home" }} />
             <Stack.Screen name="add-edit" options={{ title: "" }} />
+            <Stack.Screen name="settings" options={{ title: "Account" }} />
             <Stack.Screen name="places/[id]" options={{ title: "Details" }} />
           </Stack>
           <StatusBar style="auto" />
