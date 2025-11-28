@@ -24,8 +24,7 @@ export default function SettingsScreen() {
     const fetchPermissions = async () => {
       try {
         const permissions = await Notifications.getPermissionsAsync();
-        const granted = permissions.granted || permissions.status === "granted";
-        setNotificationsEnabled(granted);
+        setNotificationsEnabled(permissions.granted);
       } catch (error) {
         console.warn("Failed to read notification permissions", error);
       } finally {
@@ -57,8 +56,7 @@ export default function SettingsScreen() {
 
     try {
       const requested = await Notifications.requestPermissionsAsync();
-      const granted = requested.granted || requested.status === "granted";
-      if (!granted) {
+      if (!requested.granted) {
         Alert.alert(
           "Notifications disabled",
           "Enable notifications in your device settings to receive reminders.",
