@@ -147,7 +147,7 @@ export default function AddEditScreen() {
       dispatch(savePlacesAsync(userId));
     }
 
-    router.push("/");
+    router.back();
   };
 
   return (

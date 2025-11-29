@@ -39,7 +39,7 @@ export default function DetailsScreen() {
       }
     }
     // Navigate back to Home ("/")
-    router.push("/");
+    router.back();
   };
 
   return (
