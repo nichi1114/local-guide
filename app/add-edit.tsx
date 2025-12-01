@@ -79,6 +79,14 @@ export default function AddEditScreen() {
   const [location, setLocation] = useState<string>(place?.location || "");
   const [note, setNote] = useState<string>(place?.note || "");
 
+  const exitScreen = () => {
+    if (router.canGoBack()) {
+      router.back();
+      return;
+    }
+    router.replace("/");
+  };
+
   useEffect(() => {
     if (place) {
       setName(place.name);
@@ -147,7 +155,7 @@ export default function AddEditScreen() {
       dispatch(savePlacesAsync(userId));
     }
 
-    router.push("/");
+    exitScreen();
   };
 
   return (

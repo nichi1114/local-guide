@@ -18,6 +18,14 @@ export default function DetailsScreen() {
 
   const dispatch = useAppDispatch();
 
+  const exitToList = () => {
+    if (router.canGoBack()) {
+      router.back();
+      return;
+    }
+    router.replace("/");
+  };
+
   const place = useSelector((state: RootState) =>
     typeof id === "string" ? selectPlaceById(state, id) : undefined,
   );
@@ -38,8 +46,8 @@ export default function DetailsScreen() {
         dispatch(savePlacesAsync(userId));
       }
     }
-    // Navigate back to Home ("/")
-    router.push("/");
+    // Navigate back without stacking another Home screen
+    exitToList();
   };
 
   return (

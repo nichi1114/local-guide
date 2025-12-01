@@ -63,6 +63,8 @@ export default function SettingsScreen() {
     } catch (error) {
       console.warn("Failed to clear auth session from storage", error);
     } finally {
+      // Clear any existing navigation stack so the user can't go back after logout
+      router.dismissAll();
       router.replace("/login");
     }
   };
