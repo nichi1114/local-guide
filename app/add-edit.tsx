@@ -8,6 +8,7 @@ import { useAppSelector } from "@/store/hooks";
 import { addPlace, selectPlaceById, selectPlaceUserId, updatePlace } from "@/store/placeSlice";
 import { savePlacesAsync } from "@/store/placeThunks";
 import { globalStyles } from "@/styles/globalStyles";
+import { exitToPreviousOrHome } from "@/utils/navigation";
 import * as Location from "expo-location";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { useEffect, useState } from "react";
@@ -79,14 +80,6 @@ export default function AddEditScreen() {
   const [location, setLocation] = useState<string>(place?.location || "");
   const [note, setNote] = useState<string>(place?.note || "");
 
-  const exitScreen = () => {
-    if (router.canGoBack()) {
-      router.back();
-      return;
-    }
-    router.replace("/");
-  };
-
   useEffect(() => {
     if (place) {
       setName(place.name);
@@ -155,7 +148,7 @@ export default function AddEditScreen() {
       dispatch(savePlacesAsync(userId));
     }
 
-    exitScreen();
+    exitToPreviousOrHome(router, "/");
   };
 
   return (
