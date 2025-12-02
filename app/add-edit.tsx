@@ -9,6 +9,7 @@ import { addPlace, selectPlaceById, selectPlaceUserId, updatePlace } from "@/sto
 import { savePlacesAsync } from "@/store/placeThunks";
 import { globalStyles } from "@/styles/globalStyles";
 import { exitToPreviousOrHome } from "@/utils/navigation";
+import { useCameraPermissions } from "expo-camera";
 import * as Location from "expo-location";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { useEffect, useState } from "react";
@@ -21,6 +22,7 @@ import {
   TextInput,
 } from "react-native";
 import { useDispatch, useSelector } from "react-redux";
+import CameraModal from "./camera-modal";
 
 function isEmptyInput(value: string): boolean {
   return value.trim() === "";
@@ -79,6 +81,10 @@ export default function AddEditScreen() {
   const [category, setCategory] = useState<string>(place?.category || "");
   const [location, setLocation] = useState<string>(place?.location || "");
   const [note, setNote] = useState<string>(place?.note || "");
+  //todo const [images, setImages] = useState<string[]>([]);
+  const [permission, requestPermission] = useCameraPermissions();
+
+  const [cameraVisible, setCameraVisible] = useState(false);
 
   useEffect(() => {
     if (place) {
@@ -189,12 +195,38 @@ export default function AddEditScreen() {
           />
           <ActionButton
             variant="primary"
-            style={styles.useLocationButton}
+            style={styles.button}
             onPress={handleUseCurrentLocation}
             testID="use-current-location-button"
           >
             Use Current Location
           </ActionButton>
+
+          <ThemedText type="defaultSemiBold">Images:</ThemedText>
+
+          {!permission || !permission.granted ? (
+            <ThemedView style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
+              <ThemedText>We need your permission to use the camera</ThemedText>
+              <ActionButton variant="primary" style={styles.button} onPress={requestPermission}>
+                Grant Permission
+              </ActionButton>
+            </ThemedView>
+          ) : (
+            <ActionButton
+              variant="primary"
+              style={styles.button}
+              onPress={() => setCameraVisible(true)}
+            >
+              Add Photos
+            </ActionButton>
+          )}
+
+          <CameraModal
+            visible={cameraVisible}
+            placeId={""}
+            onClose={() => setCameraVisible(false)}
+          />
+
           <ThemedText type="defaultSemiBold">Note:</ThemedText>
           <TextInput
             style={styles.largerInput}
@@ -232,7 +264,7 @@ const styles = StyleSheet.create({
     ...baseInput,
     height: 100,
   },
-  useLocationButton: {
+  button: {
     ...baseInput,
     alignItems: "center",
     justifyContent: "center",
