@@ -8,6 +8,7 @@ import { useAppSelector } from "@/store/hooks";
 import { addPlace, selectPlaceById, selectPlaceUserId, updatePlace } from "@/store/placeSlice";
 import { savePlacesAsync } from "@/store/placeThunks";
 import { globalStyles } from "@/styles/globalStyles";
+import { exitToPreviousOrHome } from "@/utils/navigation";
 import * as Location from "expo-location";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { useEffect, useState } from "react";
@@ -147,7 +148,7 @@ export default function AddEditScreen() {
       dispatch(savePlacesAsync(userId));
     }
 
-    router.push("/");
+    exitToPreviousOrHome(router, "/");
   };
 
   return (
