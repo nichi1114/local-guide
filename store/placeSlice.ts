@@ -28,8 +28,10 @@ export const placeSlice = createSlice({
       state.places.push(newPlace);
 
       const placeId = newPlace.id;
+      const newImages = action.payload.images;
+      newImages.forEach((image) => (image.saved = true));
       if (!state.localImages[placeId]) state.localImages[placeId] = [];
-      state.localImages[placeId] = state.localImages[placeId].concat(action.payload.images);
+      state.localImages[placeId] = state.localImages[placeId].concat(newImages);
     },
     updatePlace: (state, action: PayloadAction<{ id: string; updated: Omit<Place, "id"> }>) => {
       const { id, updated } = action.payload;
@@ -50,6 +52,8 @@ export const placeSlice = createSlice({
     },
     addLocalImages: (state, action: PayloadAction<{ placeId: string; images: LocalImage[] }>) => {
       const { placeId, images } = action.payload;
+
+      images.forEach((image) => (image.saved = true));
       if (!state.localImages[placeId]) state.localImages[placeId] = [];
       state.localImages[placeId] = state.localImages[placeId].concat(images);
     },

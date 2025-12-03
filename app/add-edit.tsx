@@ -89,7 +89,7 @@ export default function AddEditScreen() {
 
   const selectImagesByPlaceId = useMemo(
     () => (place ? makeSelectImagesByPlaceId(place.id) : null),
-    [place?.id],
+    [place, place?.id],
   );
 
   const savedImages = useSelector((state: RootState) =>
@@ -259,13 +259,12 @@ export default function AddEditScreen() {
               (item) => (
                 <ThemedView key={item.id} style={{ position: "relative", margin: 5 }}>
                   <Image
-                    source={{ uri: item.filename ?? item.uri }}
+                    source={{ uri: item.uri }}
                     style={{ width: 100, height: 100, borderRadius: 8 }}
                   />
                   <Pressable
                     onPress={() => {
-                      if (item.filename) {
-                        //
+                      if (item.saved) {
                         setDeleteImagesIds([...deletedImageIds, item.id]);
                       } else {
                         setNewImages(newImages.filter((img) => img.id !== item.id));

@@ -9,6 +9,6 @@ export type Place = {
 export type LocalImage = {
   id: string;
   uri: string;
-  filename?: string; // for backend sync
+  saved: boolean;
   caption?: string;
 };
