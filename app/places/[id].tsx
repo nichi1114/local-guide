@@ -7,6 +7,7 @@ import { useAppDispatch, useAppSelector } from "@/store/hooks";
 import { deletePlace, selectPlaceById, selectPlaceUserId } from "@/store/placeSlice";
 import { savePlacesAsync } from "@/store/placeThunks";
 import { globalStyles } from "@/styles/globalStyles";
+import { exitToPreviousOrHome } from "@/utils/navigation";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { StyleSheet } from "react-native";
 import { useSelector } from "react-redux";
@@ -38,8 +39,8 @@ export default function DetailsScreen() {
         dispatch(savePlacesAsync(userId));
       }
     }
-    // Navigate back to Home ("/")
-    router.push("/");
+    // Navigate back without stacking another Home screen
+    exitToPreviousOrHome(router, "/");
   };
 
   return (
