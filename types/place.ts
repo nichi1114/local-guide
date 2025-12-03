@@ -4,11 +4,11 @@ export type Place = {
   category: string;
   location: string;
   note: string;
-  // todo images: PlaceImage[];
 };
 
-export type PlaceImage = {
+export type LocalImage = {
   id: string;
-  filename: string;
-  caption: string | null;
+  uri: string;
+  filename?: string; // for backend sync
+  caption?: string;
 };

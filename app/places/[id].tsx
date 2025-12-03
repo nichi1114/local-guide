@@ -4,7 +4,9 @@ import { ThemedText } from "@/components/themed-text";
 import { ThemedView } from "@/components/themed-view";
 import { RootState } from "@/store";
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
-import { deletePlace, selectPlaceById, selectPlaceUserId } from "@/store/placeSlice";
+import { deletePlaceWithBackend } from "@/store/placeBackendThunks";
+import { selectPlaceById, selectPlaceUserId } from "@/store/placeSelectors";
+import { deletePlace } from "@/store/placeSlice";
 import { savePlacesAsync } from "@/store/placeThunks";
 import { globalStyles } from "@/styles/globalStyles";
 import { exitToPreviousOrHome } from "@/utils/navigation";
@@ -36,8 +38,16 @@ export default function DetailsScreen() {
       dispatch(deletePlace(id));
 
       if (userId) {
-        dispatch(savePlacesAsync(userId));
+        // local
+        dispatch(savePlacesAsync(userId))
+          .then(() => console.log("Saved to AsyncStorage"))
+          .catch((err) => console.error("AsyncStorage save failed:", err));
       }
+
+      // backend
+      dispatch(deletePlaceWithBackend({ placeId: id }))
+        .then(() => console.log("Delete place with Backend"))
+        .catch((err) => console.error("Backend delete place failed:", err));
     }
     // Navigate back without stacking another Home screen
     exitToPreviousOrHome(router, "/");

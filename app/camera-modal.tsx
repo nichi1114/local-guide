@@ -1,24 +1,23 @@
 import { ThemedText } from "@/components/themed-text";
 import { ThemedView } from "@/components/themed-view";
+import { LocalImage } from "@/types/place";
 import FontAwesome6 from "@expo/vector-icons/FontAwesome6";
 import { CameraType, CameraView } from "expo-camera";
 import { randomUUID } from "expo-crypto";
 import { Image } from "expo-image";
 import React, { useRef, useState } from "react";
 import { Modal, Pressable, StyleSheet } from "react-native";
-import { useDispatch } from "react-redux";
 
 type CameraModalProps = {
   visible: boolean;
-  placeId: string;
+  setImages: React.Dispatch<React.SetStateAction<LocalImage[]>>;
   onClose: () => void;
 };
 
-export default function CameraModal({ visible, placeId, onClose }: CameraModalProps) {
+export default function CameraModal({ visible, setImages, onClose }: CameraModalProps) {
   const [facing, setFacing] = useState<CameraType>("back");
   const [uri, setUri] = useState<string | null>(null);
   const cameraRef = useRef<CameraView>(null);
-  const dispatch = useDispatch();
 
   const takePicture = async () => {
     const photo = await cameraRef.current?.takePictureAsync({ quality: 0.7, base64: false });
@@ -33,7 +32,12 @@ export default function CameraModal({ visible, placeId, onClose }: CameraModalPr
   const confirm = () => {
     if (!uri) return;
     const id = randomUUID();
-    //todo dispatch image
+    const newImage: LocalImage = {
+      id: id,
+      uri: uri,
+    };
+    console.log("image id", id);
+    setImages((prevImages) => [...prevImages, newImage]);
     setUri(null);
     onClose();
   };

@@ -5,18 +5,29 @@ import { ThemedView } from "@/components/themed-view";
 import { globalColors } from "@/constants/global-colors";
 import { AppDispatch, RootState } from "@/store";
 import { useAppSelector } from "@/store/hooks";
-import { addPlace, selectPlaceById, selectPlaceUserId, updatePlace } from "@/store/placeSlice";
+import { addPlaceWithBackend, updatePlaceWithBackend } from "@/store/placeBackendThunks";
+import {
+  makeSelectImagesByPlaceId,
+  selectPlaceById,
+  selectPlaceUserId,
+} from "@/store/placeSelectors";
+import { addLocalImages, addPlace, markImageDeleted, updatePlace } from "@/store/placeSlice";
 import { savePlacesAsync } from "@/store/placeThunks";
 import { globalStyles } from "@/styles/globalStyles";
+import { LocalImage } from "@/types/place";
 import { exitToPreviousOrHome } from "@/utils/navigation";
+import FontAwesome6 from "@expo/vector-icons/FontAwesome6";
 import { useCameraPermissions } from "expo-camera";
+import { randomUUID } from "expo-crypto";
+import { Image } from "expo-image";
 import * as Location from "expo-location";
 import { useLocalSearchParams, useRouter } from "expo-router";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
   Alert,
   KeyboardAvoidingView,
   Platform,
+  Pressable,
   ScrollView,
   StyleSheet,
   TextInput,
@@ -76,12 +87,22 @@ export default function AddEditScreen() {
     typeof id === "string" ? selectPlaceById(state, id) : undefined,
   );
 
+  const selectImagesByPlaceId = useMemo(
+    () => (place ? makeSelectImagesByPlaceId(place.id) : null),
+    [place?.id],
+  );
+
+  const savedImages = useSelector((state: RootState) =>
+    selectImagesByPlaceId ? selectImagesByPlaceId(state) : [],
+  );
+
   // Create states
   const [name, setName] = useState<string>(place?.name || "");
   const [category, setCategory] = useState<string>(place?.category || "");
   const [location, setLocation] = useState<string>(place?.location || "");
   const [note, setNote] = useState<string>(place?.note || "");
-  //todo const [images, setImages] = useState<string[]>([]);
+  const [newImages, setNewImages] = useState<LocalImage[]>([]);
+  const [deletedImageIds, setDeleteImagesIds] = useState<string[]>([]);
   const [permission, requestPermission] = useCameraPermissions();
 
   const [cameraVisible, setCameraVisible] = useState(false);
@@ -103,7 +124,7 @@ export default function AddEditScreen() {
     setLocation(address);
   };
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     // Validate inputs
     if (isEmptyInput(name)) {
       Alert.alert("Error", "Please enter a name");
@@ -123,6 +144,7 @@ export default function AddEditScreen() {
 
     // note can be empty
 
+    let placeId: string | undefined = place?.id;
     // save to storage
     if (place) {
       // Dispatch updatePlace
@@ -138,20 +160,44 @@ export default function AddEditScreen() {
             },
           }),
         );
+        dispatch(markImageDeleted({ placeId: place.id, imageIds: deletedImageIds }));
+        dispatch(addLocalImages({ placeId: place.id, images: newImages }));
       }
     } else {
-      dispatch(
-        addPlace({
-          name,
-          category,
-          location,
-          note,
-        }),
-      );
+      placeId = randomUUID();
+      const newPlace = {
+        id: placeId,
+        name,
+        category,
+        location,
+        note,
+        newImages,
+      };
+      dispatch(addPlace({ place: newPlace, images: newImages }));
     }
 
     if (userId) {
-      dispatch(savePlacesAsync(userId));
+      dispatch(savePlacesAsync(userId))
+        .then(() => console.log("Saved to AsyncStorage"))
+        .catch((err) => console.error("AsyncStorage save failed:", err));
+    }
+
+    if (placeId) {
+      if (place) {
+        // update with backend
+        dispatch(updatePlaceWithBackend({ placeId }))
+          .then(() => console.log("Update place to backend"))
+          .catch((err) => {
+            console.error("Backend update place failed:", err);
+          });
+      } else {
+        // add with backend
+        dispatch(addPlaceWithBackend({ placeId }))
+          .then(() => console.log("Add place to backend"))
+          .catch((err) => {
+            console.error("Backend add place failed:", err);
+          });
+      }
     }
 
     exitToPreviousOrHome(router, "/");
@@ -203,6 +249,43 @@ export default function AddEditScreen() {
           </ActionButton>
 
           <ThemedText type="defaultSemiBold">Images:</ThemedText>
+          <ThemedView
+            style={{
+              flexDirection: "row",
+              flexWrap: "wrap",
+            }}
+          >
+            {[...savedImages.filter((img) => !deletedImageIds.includes(img.id)), ...newImages].map(
+              (item) => (
+                <ThemedView key={item.id} style={{ position: "relative", margin: 5 }}>
+                  <Image
+                    source={{ uri: item.filename ?? item.uri }}
+                    style={{ width: 100, height: 100, borderRadius: 8 }}
+                  />
+                  <Pressable
+                    onPress={() => {
+                      if (item.filename) {
+                        //
+                        setDeleteImagesIds([...deletedImageIds, item.id]);
+                      } else {
+                        setNewImages(newImages.filter((img) => img.id !== item.id));
+                      }
+                    }}
+                    style={{
+                      position: "absolute",
+                      top: 4,
+                      right: 4,
+                      backgroundColor: "white",
+                      padding: 6,
+                      borderRadius: 20,
+                    }}
+                  >
+                    <FontAwesome6 name="trash-can" size={24} color="red" />
+                  </Pressable>
+                </ThemedView>
+              ),
+            )}
+          </ThemedView>
 
           {!permission || !permission.granted ? (
             <ThemedView style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
@@ -223,7 +306,7 @@ export default function AddEditScreen() {
 
           <CameraModal
             visible={cameraVisible}
-            placeId={""}
+            setImages={setNewImages}
             onClose={() => setCameraVisible(false)}
           />
 
