@@ -35,6 +35,7 @@ export default function CameraModal({ visible, setImages, onClose }: CameraModal
     const newImage: LocalImage = {
       id: id,
       uri: uri,
+      saved: false,
     };
     console.log("image id", id);
     setImages((prevImages) => [...prevImages, newImage]);
