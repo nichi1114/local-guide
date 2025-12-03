@@ -89,7 +89,7 @@ export default function AddEditScreen() {
 
   const selectImagesByPlaceId = useMemo(
     () => (place ? makeSelectImagesByPlaceId(place.id) : null),
-    [place, place?.id],
+    [place],
   );
 
   const savedImages = useSelector((state: RootState) =>
