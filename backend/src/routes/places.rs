@@ -483,7 +483,7 @@ async fn delete_place(
     let repository = state.place_repository();
     let image_store = state.image_store();
 
-    let Some((_place, images)) = repository
+    let Some((_place, _images)) = repository
         .delete_place_for_user(claims.sub, place_id)
         .await
         .map_err(|err| {
@@ -494,8 +494,6 @@ async fn delete_place(
         return Err(place_not_found());
     };
 
-    let file_names: Vec<String> = images.into_iter().map(|img| img.file_name).collect();
-    image_store.remove_files(place_id, &file_names).await;
     image_store.remove_place_dir(place_id).await;
 
     Ok(StatusCode::NO_CONTENT)

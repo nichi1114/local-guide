@@ -6,6 +6,7 @@ use axum::{
     Json, Router,
 };
 use tracing::error;
+use uuid::Uuid;
 
 use crate::app_state::AppState;
 use crate::jwt::JwtClaims;
@@ -54,18 +55,7 @@ async fn delete_user(
             internal_error()
         })?;
 
-    let mut files_by_place = Vec::new();
-    for place in places {
-        let images = place_repository
-            .list_images_for_place(claims.sub, place.id)
-            .await
-            .map_err(|err| {
-                error!(?err, "failed to list place images for user deletion");
-                internal_error()
-            })?;
-        let file_names: Vec<String> = images.into_iter().map(|img| img.file_name).collect();
-        files_by_place.push((place.id, file_names));
-    }
+    let place_ids: Vec<Uuid> = places.into_iter().map(|place| place.id).collect();
 
     let deleted = auth_repository
         .delete_user(claims.sub)
@@ -79,8 +69,7 @@ async fn delete_user(
         return Err(user_not_found());
     }
 
-    for (place_id, file_names) in files_by_place {
-        image_store.remove_files(place_id, &file_names).await;
+    for place_id in place_ids {
         image_store.remove_place_dir(place_id).await;
     }
 
