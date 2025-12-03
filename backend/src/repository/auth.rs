@@ -184,6 +184,53 @@ impl AuthRepository {
 
         Ok(record)
     }
+
+    pub async fn delete_user_with_places(&self, user_id: Uuid) -> RepoResult<Option<Vec<Uuid>>> {
+        let mut tx = self.pool.begin().await?;
+
+        // Lock user row so concurrent inserts referencing this user block until deletion completes.
+        let exists = sqlx::query_scalar::<_, Uuid>(
+            r#"
+            SELECT id
+            FROM users
+            WHERE id = $1
+            FOR UPDATE
+            "#,
+        )
+        .bind(user_id)
+        .fetch_optional(tx.as_mut())
+        .await?;
+
+        let Some(_user_id) = exists else {
+            tx.commit().await?;
+            return Ok(None);
+        };
+
+        // Delete places first to return their IDs for filesystem cleanup.
+        let place_ids = sqlx::query_scalar::<_, Uuid>(
+            r#"
+            DELETE FROM places
+            WHERE user_id = $1
+            RETURNING id
+            "#,
+        )
+        .bind(user_id)
+        .fetch_all(tx.as_mut())
+        .await?;
+
+        sqlx::query(
+            r#"
+            DELETE FROM users
+            WHERE id = $1
+            "#,
+        )
+        .bind(user_id)
+        .execute(tx.as_mut())
+        .await?;
+
+        tx.commit().await?;
+        Ok(Some(place_ids))
+    }
 }
 
 #[cfg(test)]
