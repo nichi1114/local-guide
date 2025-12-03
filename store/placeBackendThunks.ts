@@ -10,11 +10,15 @@ export const addPlaceWithBackend = createAsyncThunk<
   { placeId: string },
   { state: RootState }
 >("places/addPlaceWithBackend", async ({ placeId }, { getState, dispatch }) => {
-  const state = getState().poi;
-  const place = state.places.find((p) => p.id === placeId);
+  const placeState = getState().poi;
+  const authState = getState().auth;
+  const token = authState.session?.jwt_token;
+  if (!token) throw new Error("Missing auth token");
+
+  const place = placeState.places.find((p) => p.id === placeId);
   if (!place) throw new Error("Place not found");
 
-  const imagesToUpload: LocalImage[] = state.localImages[placeId] || [];
+  const imagesToUpload: LocalImage[] = placeState.localImages[placeId] || [];
   const formData = new FormData();
 
   formData.append("id", place.id);
@@ -35,7 +39,7 @@ export const addPlaceWithBackend = createAsyncThunk<
   const res = await fetch(`${API_BASE_URL}/places`, {
     method: "POST",
     headers: {
-      Authorization: `Bearer <token>`,
+      Authorization: `Bearer ${token}`,
       "Content-Type": "multipart/form-data",
     },
     body: formData,
@@ -53,12 +57,16 @@ export const updatePlaceWithBackend = createAsyncThunk<
   { placeId: string },
   { state: RootState }
 >("places/updatePlaceWithBackend", async ({ placeId }, { getState, dispatch }) => {
-  const state = getState().poi;
-  const place = state.places.find((p) => p.id === placeId);
+  const placeState = getState().poi;
+  const authState = getState().auth;
+  const token = authState.session?.jwt_token;
+  if (!token) throw new Error("Missing auth token");
+
+  const place = placeState.places.find((p) => p.id === placeId);
   if (!place) throw new Error("Place not found");
 
-  const imagesToUpload: LocalImage[] = state.localImages[placeId] || [];
-  const imagesToDelete: string[] = state.deletedImages[placeId] || [];
+  const imagesToUpload = placeState.localImages[placeId] || [];
+  const imagesToDelete = placeState.deletedImages[placeId] || [];
 
   const formData = new FormData();
   formData.append("name", place.name);
@@ -82,7 +90,7 @@ export const updatePlaceWithBackend = createAsyncThunk<
   const res = await fetch(`${API_BASE_URL}/places/${place.id}`, {
     method: "PATCH",
     headers: {
-      Authorization: `Bearer <token>`,
+      Authorization: `Bearer ${token}`,
       "Content-Type": "multipart/form-data",
     },
     body: formData,
@@ -100,11 +108,16 @@ export const deletePlaceWithBackend = createAsyncThunk<
   void,
   { placeId: string },
   { state: RootState }
->("places/deletePlaceWithBackend", async ({ placeId }, { dispatch }) => {
+>("places/deletePlaceWithBackend", async ({ placeId }, { getState, dispatch }) => {
+  const state = getState();
+  const token = state.auth.session?.jwt_token;
+
+  if (!token) throw new Error("Missing auth token");
+
   const res = await fetch(`${API_BASE_URL}/places/${placeId}`, {
     method: "DELETE",
     headers: {
-      Authorization: `Bearer <token>`,
+      Authorization: `Bearer ${token}`,
     },
   });
 
