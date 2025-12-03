@@ -277,4 +277,55 @@ impl PlaceRepository {
 
         Ok(record)
     }
+
+    pub async fn delete_place_for_user(
+        &self,
+        user_id: Uuid,
+        place_id: Uuid,
+    ) -> RepoResult<Option<(PlaceRecord, Vec<PlaceImageRecord>)>> {
+        let mut tx = self.pool.begin().await?;
+
+        let place = sqlx::query_as::<_, PlaceRecord>(
+            r#"
+            SELECT id, user_id, name, category, location, note, created_at, updated_at
+            FROM places
+            WHERE id = $1 AND user_id = $2
+            "#,
+        )
+        .bind(place_id)
+        .bind(user_id)
+        .fetch_optional(tx.as_mut())
+        .await?;
+
+        let Some(place) = place else {
+            tx.commit().await?;
+            return Ok(None);
+        };
+
+        let images = sqlx::query_as::<_, PlaceImageRecord>(
+            r#"
+            SELECT id, place_id, file_name, caption, created_at
+            FROM place_images
+            WHERE place_id = $1
+            "#,
+        )
+        .bind(place_id)
+        .fetch_all(tx.as_mut())
+        .await?;
+
+        sqlx::query(
+            r#"
+            DELETE FROM places
+            WHERE id = $1 AND user_id = $2
+            "#,
+        )
+        .bind(place_id)
+        .bind(user_id)
+        .execute(tx.as_mut())
+        .await?;
+
+        tx.commit().await?;
+
+        Ok(Some((place, images)))
+    }
 }

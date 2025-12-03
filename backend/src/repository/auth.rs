@@ -184,6 +184,20 @@ impl AuthRepository {
 
         Ok(record)
     }
+
+    pub async fn delete_user(&self, user_id: Uuid) -> RepoResult<bool> {
+        let result = sqlx::query(
+            r#"
+            DELETE FROM users
+            WHERE id = $1
+            "#,
+        )
+        .bind(user_id)
+        .execute(&self.pool)
+        .await?;
+
+        Ok(result.rows_affected() > 0)
+    }
 }
 
 #[cfg(test)]
