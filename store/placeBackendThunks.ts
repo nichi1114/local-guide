@@ -2,7 +2,7 @@ import { API_BASE_URL } from "@/constants/env";
 import { LocalImage } from "@/types/place";
 import { createAsyncThunk } from "@reduxjs/toolkit";
 import { RootState } from ".";
-import { clearDeletedImages, clearLocalImages, deletePlace } from "./placeSlice";
+import { clearDeletedImages } from "./placeSlice";
 
 // Add a place to backend
 export const addPlaceWithBackend = createAsyncThunk<
@@ -46,9 +46,6 @@ export const addPlaceWithBackend = createAsyncThunk<
   });
 
   if (!res.ok) throw new Error("Failed to create place in backend");
-
-  // Clear local images after successful upload
-  dispatch(clearLocalImages(placeId));
 });
 
 // Update a place in backend
@@ -98,8 +95,7 @@ export const updatePlaceWithBackend = createAsyncThunk<
 
   if (!res.ok) throw new Error("Failed to update place in backend");
 
-  // Clear local & deleted images after successful upload
-  dispatch(clearLocalImages(placeId));
+  // Clear deleted images after successful upload
   dispatch(clearDeletedImages(placeId));
 });
 
@@ -122,9 +118,4 @@ export const deletePlaceWithBackend = createAsyncThunk<
   });
 
   if (!res.ok) throw new Error("Failed to delete place in backend");
-
-  // Remove from state
-  dispatch(deletePlace(placeId));
-  dispatch(clearLocalImages(placeId));
-  dispatch(clearDeletedImages(placeId));
 });
