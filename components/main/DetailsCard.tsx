@@ -17,6 +17,7 @@ export default function DetailsCard({ place, images }: Props) {
       <ThemedText style={styles.text}>Name: {place.name}</ThemedText>
       <ThemedText style={styles.text}>Category: {place.category}</ThemedText>
       <ThemedText style={styles.text}>Location: {place.location}</ThemedText>
+      {place.note ? <ThemedText style={styles.text}>Note: {place.note}</ThemedText> : null}
       <ThemedView
         style={{
           flexDirection: "row",
@@ -32,7 +33,6 @@ export default function DetailsCard({ place, images }: Props) {
           </ThemedView>
         ))}
       </ThemedView>
-      {place.note ? <ThemedText style={styles.text}>Note: {place.note}</ThemedText> : null}
     </Card>
   );
 }

@@ -256,8 +256,8 @@ export default function AddEditScreen() {
             }}
           >
             {[...savedImages.filter((img) => !deletedImageIds.includes(img.id)), ...newImages].map(
-              (item) => (
-                <ThemedView key={item.id} style={{ position: "relative", margin: 5 }}>
+              (item, index) => (
+                <ThemedView key={`${item.id}-${index}`} style={{ position: "relative", margin: 5 }}>
                   <Image
                     source={{ uri: item.uri }}
                     style={{ width: 100, height: 100, borderRadius: 8 }}
@@ -265,8 +265,10 @@ export default function AddEditScreen() {
                   <Pressable
                     onPress={() => {
                       if (item.saved) {
+                        // delete saved images
                         setDeleteImagesIds([...deletedImageIds, item.id]);
                       } else {
+                        // remove just captured but unsaved images
                         setNewImages(newImages.filter((img) => img.id !== item.id));
                       }
                     }}
