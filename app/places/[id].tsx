@@ -5,13 +5,18 @@ import { ThemedView } from "@/components/themed-view";
 import { RootState } from "@/store";
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
 import { deletePlaceWithBackend } from "@/store/placeBackendThunks";
-import { selectPlaceById, selectPlaceUserId } from "@/store/placeSelectors";
+import {
+  makeSelectImagesByPlaceId,
+  selectPlaceById,
+  selectPlaceUserId,
+} from "@/store/placeSelectors";
 import { deletePlace } from "@/store/placeSlice";
 import { savePlacesAsync } from "@/store/placeThunks";
 import { globalStyles } from "@/styles/globalStyles";
 import { exitToPreviousOrHome } from "@/utils/navigation";
 import { useLocalSearchParams, useRouter } from "expo-router";
-import { StyleSheet } from "react-native";
+import { useMemo } from "react";
+import { ScrollView, StyleSheet } from "react-native";
 import { useSelector } from "react-redux";
 
 export default function DetailsScreen() {
@@ -23,6 +28,15 @@ export default function DetailsScreen() {
 
   const place = useSelector((state: RootState) =>
     typeof id === "string" ? selectPlaceById(state, id) : undefined,
+  );
+
+  const selectImagesByPlaceId = useMemo(
+    () => (place ? makeSelectImagesByPlaceId(place.id) : null),
+    [place],
+  );
+
+  const savedImages = useSelector((state: RootState) =>
+    selectImagesByPlaceId ? selectImagesByPlaceId(state) : [],
   );
 
   if (!place) {
@@ -54,28 +68,30 @@ export default function DetailsScreen() {
   };
 
   return (
-    <ThemedView style={globalStyles.container}>
-      <DetailsCard place={place} />
+    <ScrollView>
+      <ThemedView style={globalStyles.container}>
+        <ThemedView style={styles.buttons}>
+          <ActionButton
+            variant="primary"
+            onPress={() => router.push(`/add-edit?id=${place.id}`)}
+            style={styles.button}
+            testID="edit-button"
+          >
+            Edit
+          </ActionButton>
+          <ActionButton
+            variant="danger"
+            onPress={handleDelete}
+            style={styles.button}
+            testID="delete-button"
+          >
+            Delete
+          </ActionButton>
+        </ThemedView>
 
-      <ThemedView style={styles.buttons}>
-        <ActionButton
-          variant="primary"
-          onPress={() => router.push(`/add-edit?id=${place.id}`)}
-          style={styles.button}
-          testID="edit-button"
-        >
-          Edit
-        </ActionButton>
-        <ActionButton
-          variant="danger"
-          onPress={handleDelete}
-          style={styles.button}
-          testID="delete-button"
-        >
-          Delete
-        </ActionButton>
+        <DetailsCard place={place} images={savedImages} />
       </ThemedView>
-    </ThemedView>
+    </ScrollView>
   );
 }
 
@@ -84,7 +100,7 @@ const styles = StyleSheet.create({
   buttons: {
     flexDirection: "row",
     justifyContent: "space-between",
-    marginTop: 10,
+    marginBottom: 10,
     gap: 10,
   },
   // Individual button style

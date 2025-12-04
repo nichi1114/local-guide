@@ -288,7 +288,9 @@ export default function AddEditScreen() {
 
           {!permission || !permission.granted ? (
             <ThemedView style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
-              <ThemedText>We need your permission to use the camera</ThemedText>
+              <ThemedText type="defaultSemiBold">
+                We need your permission to use the camera
+              </ThemedText>
               <ActionButton variant="primary" style={styles.button} onPress={requestPermission}>
                 Grant Permission
               </ActionButton>
