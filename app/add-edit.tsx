@@ -6,11 +6,7 @@ import { globalColors } from "@/constants/global-colors";
 import { AppDispatch, RootState } from "@/store";
 import { useAppSelector } from "@/store/hooks";
 import { addPlaceWithBackend, updatePlaceWithBackend } from "@/store/placeBackendThunks";
-import {
-  makeSelectImagesByPlaceId,
-  selectPlaceById,
-  selectPlaceUserId,
-} from "@/store/placeSelectors";
+import { selectImagesById, selectPlaceById, selectPlaceUserId } from "@/store/placeSelectors";
 import { addLocalImages, addPlace, markImageDeleted, updatePlace } from "@/store/placeSlice";
 import { savePlacesAsync } from "@/store/placeThunks";
 import { globalStyles } from "@/styles/globalStyles";
@@ -22,7 +18,7 @@ import { randomUUID } from "expo-crypto";
 import { Image } from "expo-image";
 import * as Location from "expo-location";
 import { useLocalSearchParams, useRouter } from "expo-router";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import {
   Alert,
   KeyboardAvoidingView,
@@ -87,13 +83,8 @@ export default function AddEditScreen() {
     typeof id === "string" ? selectPlaceById(state, id) : undefined,
   );
 
-  const selectImagesByPlaceId = useMemo(
-    () => (place ? makeSelectImagesByPlaceId(place.id) : null),
-    [place],
-  );
-
   const savedImages = useSelector((state: RootState) =>
-    selectImagesByPlaceId ? selectImagesByPlaceId(state) : [],
+    typeof id === "string" ? selectImagesById(state, id) : [],
   );
 
   // Create states

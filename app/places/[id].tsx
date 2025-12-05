@@ -5,17 +5,12 @@ import { ThemedView } from "@/components/themed-view";
 import { RootState } from "@/store";
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
 import { deletePlaceWithBackend } from "@/store/placeBackendThunks";
-import {
-  makeSelectImagesByPlaceId,
-  selectPlaceById,
-  selectPlaceUserId,
-} from "@/store/placeSelectors";
+import { selectImagesById, selectPlaceById, selectPlaceUserId } from "@/store/placeSelectors";
 import { deletePlace } from "@/store/placeSlice";
 import { savePlacesAsync } from "@/store/placeThunks";
 import { globalStyles } from "@/styles/globalStyles";
 import { exitToPreviousOrHome } from "@/utils/navigation";
 import { useLocalSearchParams, useRouter } from "expo-router";
-import { useMemo } from "react";
 import { ScrollView, StyleSheet } from "react-native";
 import { useSelector } from "react-redux";
 
@@ -30,13 +25,8 @@ export default function DetailsScreen() {
     typeof id === "string" ? selectPlaceById(state, id) : undefined,
   );
 
-  const selectImagesByPlaceId = useMemo(
-    () => (place ? makeSelectImagesByPlaceId(place.id) : null),
-    [place],
-  );
-
   const savedImages = useSelector((state: RootState) =>
-    selectImagesByPlaceId ? selectImagesByPlaceId(state) : [],
+    typeof id === "string" ? selectImagesById(state, id) : [],
   );
 
   if (!place) {
