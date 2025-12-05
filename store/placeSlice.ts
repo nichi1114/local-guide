@@ -76,12 +76,21 @@ export const placeSlice = createSlice({
   },
   extraReducers: (builder) => {
     builder.addCase(loadPlacesAsync.fulfilled, (state, action) => {
-      state.places = action.payload.places || [];
-      state.localImages = action.payload.localImages || {};
+      const { places, localImages } = action.payload;
+      if (localImages) {
+        Object.values(localImages).forEach((imagesArray) => {
+          imagesArray.forEach((image) => {
+            image.saved = true;
+          });
+        });
+      }
+      state.places = places || [];
+      state.localImages = localImages || {};
     });
     builder.addCase(savePlacesAsync.fulfilled, (state, action) => {
-      state.places = action.payload.places;
-      state.localImages = action.payload.localImages;
+      const { places, localImages } = action.payload;
+      state.places = places;
+      state.localImages = localImages;
     });
   },
 });

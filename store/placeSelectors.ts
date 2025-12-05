@@ -8,8 +8,9 @@ export const selectPlaceById = (state: RootState, id: string) =>
 
 export const selectLocalImages = (state: RootState) => state.poi.localImages;
 
-export const makeSelectImagesByPlaceId = (placeId: string) =>
-  createSelector(
-    (state: RootState) => state.poi.localImages,
-    (localImages) => localImages[placeId] || [],
-  );
+export const selectImagesById = createSelector(
+  [selectLocalImages, (_, placeId) => placeId],
+  (allImages, placeId) => {
+    return allImages[placeId] || [];
+  },
+);

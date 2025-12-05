@@ -13,9 +13,9 @@ import { globalStyles } from "@/styles/globalStyles";
 import { LocalImage } from "@/types/place";
 import { exitToPreviousOrHome } from "@/utils/navigation";
 import FontAwesome6 from "@expo/vector-icons/FontAwesome6";
-import { useCameraPermissions } from "expo-camera";
 import { randomUUID } from "expo-crypto";
 import { Image } from "expo-image";
+import * as ImagePicker from "expo-image-picker";
 import * as Location from "expo-location";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { useEffect, useState } from "react";
@@ -29,7 +29,6 @@ import {
   TextInput,
 } from "react-native";
 import { useDispatch, useSelector } from "react-redux";
-import CameraModal from "./camera-modal";
 
 function isEmptyInput(value: string): boolean {
   return value.trim() === "";
@@ -83,9 +82,15 @@ export default function AddEditScreen() {
     typeof id === "string" ? selectPlaceById(state, id) : undefined,
   );
 
-  const savedImages = useSelector((state: RootState) =>
-    typeof id === "string" ? selectImagesById(state, id) : [],
-  );
+  const selectCurrentImages = (state: RootState) => {
+    if (typeof id === "string") {
+      return selectImagesById(state, id);
+    } else {
+      return [];
+    }
+  };
+
+  const savedImages = useAppSelector(selectCurrentImages);
 
   // Create states
   const [name, setName] = useState<string>(place?.name || "");
@@ -94,9 +99,6 @@ export default function AddEditScreen() {
   const [note, setNote] = useState<string>(place?.note || "");
   const [newImages, setNewImages] = useState<LocalImage[]>([]);
   const [deletedImageIds, setDeleteImagesIds] = useState<string[]>([]);
-  const [permission, requestPermission] = useCameraPermissions();
-
-  const [cameraVisible, setCameraVisible] = useState(false);
 
   useEffect(() => {
     if (place) {
@@ -115,22 +117,29 @@ export default function AddEditScreen() {
     setLocation(address);
   };
 
-  const handleCameraPermission = async () => {
-    if (!permission) {
-      console.log("Permission is not initialized");
+  const pickImage = async () => {
+    const permissionResult = await ImagePicker.requestMediaLibraryPermissionsAsync();
+
+    if (!permissionResult.granted) {
+      Alert.alert("Permission required", "Permission to access the media library is required.");
       return;
     }
 
-    if (!permission.granted) {
-      const response = await requestPermission();
+    let result = await ImagePicker.launchCameraAsync({
+      mediaTypes: ["images"],
+      allowsEditing: true,
+      aspect: [4, 3],
+      quality: 1,
+    });
 
-      if (response && response.granted) {
-        setCameraVisible(true);
-      } else {
-        Alert.alert("Camera Permission denied");
-      }
-    } else {
-      setCameraVisible(true);
+    if (!result.canceled) {
+      const uri = result.assets[0].uri;
+      const newImage: LocalImage = {
+        id: randomUUID(),
+        uri: uri,
+        saved: false,
+      };
+      setNewImages([...newImages, newImage]);
     }
   };
 
@@ -172,6 +181,8 @@ export default function AddEditScreen() {
         );
         dispatch(markImageDeleted({ placeId: place.id, imageIds: deletedImageIds }));
         dispatch(addLocalImages({ placeId: place.id, images: newImages }));
+        setNewImages([]);
+        setDeleteImagesIds([]);
       }
     } else {
       placeId = randomUUID();
@@ -184,6 +195,7 @@ export default function AddEditScreen() {
         newImages,
       };
       dispatch(addPlace({ place: newPlace, images: newImages }));
+      setNewImages([]);
     }
 
     if (userId) {
@@ -266,8 +278,8 @@ export default function AddEditScreen() {
             }}
           >
             {[...savedImages.filter((img) => !deletedImageIds.includes(img.id)), ...newImages].map(
-              (item, index) => (
-                <ThemedView key={`${item.id}-${index}`} style={{ position: "relative", margin: 5 }}>
+              (item) => (
+                <ThemedView key={item.id} style={{ position: "relative", margin: 5 }}>
                   <Image
                     source={{ uri: item.uri }}
                     style={{ width: 100, height: 100, borderRadius: 8 }}
@@ -277,9 +289,11 @@ export default function AddEditScreen() {
                       if (item.saved) {
                         // delete saved images
                         setDeleteImagesIds([...deletedImageIds, item.id]);
+                        console.log("Delete saved image:", item.id);
                       } else {
                         // remove just captured but unsaved images
                         setNewImages(newImages.filter((img) => img.id !== item.id));
+                        console.log("Delete just captured image:", item.id);
                       }
                     }}
                     style={{
@@ -298,25 +312,9 @@ export default function AddEditScreen() {
             )}
           </ThemedView>
 
-          {!permission || !permission.granted ? (
-            <ActionButton variant="primary" style={styles.button} onPress={handleCameraPermission}>
-              Take Photo
-            </ActionButton>
-          ) : (
-            <ActionButton
-              variant="primary"
-              style={styles.button}
-              onPress={() => setCameraVisible(true)}
-            >
-              Take Photo
-            </ActionButton>
-          )}
-
-          <CameraModal
-            visible={cameraVisible}
-            setImages={setNewImages}
-            onClose={() => setCameraVisible(false)}
-          />
+          <ActionButton variant="primary" style={styles.button} onPress={pickImage}>
+            Take Photo
+          </ActionButton>
 
           <ThemedText type="defaultSemiBold">Note:</ThemedText>
           <TextInput

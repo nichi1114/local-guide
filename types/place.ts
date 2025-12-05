@@ -7,8 +7,8 @@ export type Place = {
 };
 
 export type LocalImage = {
-  id: string;
-  uri: string;
-  saved: boolean;
+  id: string; // image id
+  uri: string; // image uri
+  saved: boolean; // submitted or not
   caption?: string;
 };
