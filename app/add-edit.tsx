@@ -98,7 +98,9 @@ export default function AddEditScreen() {
   const [location, setLocation] = useState<string>(place?.location || "");
   const [note, setNote] = useState<string>(place?.note || "");
   const [newImages, setNewImages] = useState<LocalImage[]>([]);
-  const [deletedImageIds, setDeleteImagesIds] = useState<string[]>([]);
+  const [deletedImageIds, setDeletedImagesIds] = useState<string[]>([]);
+
+  const deletedSet = new Set(deletedImageIds);
 
   useEffect(() => {
     if (place) {
@@ -143,6 +145,18 @@ export default function AddEditScreen() {
     }
   };
 
+  const handleDeleteImage = (item: LocalImage) => {
+    if (item.saved) {
+      // delete saved images
+      setDeletedImagesIds([...deletedImageIds, item.id]);
+      console.log("Delete saved image:", item.id);
+    } else {
+      // remove just captured but unsaved images
+      setNewImages(newImages.filter((img) => img.id !== item.id));
+      console.log("Delete just captured image:", item.id);
+    }
+  };
+
   const handleSubmit = async () => {
     // Validate inputs
     if (isEmptyInput(name)) {
@@ -182,7 +196,7 @@ export default function AddEditScreen() {
         dispatch(markImageDeleted({ placeId: place.id, imageIds: deletedImageIds }));
         dispatch(addLocalImages({ placeId: place.id, images: newImages }));
         setNewImages([]);
-        setDeleteImagesIds([]);
+        setDeletedImagesIds([]);
       }
     } else {
       placeId = randomUUID();
@@ -192,7 +206,6 @@ export default function AddEditScreen() {
         category,
         location,
         note,
-        newImages,
       };
       dispatch(addPlace({ place: newPlace, images: newImages }));
       setNewImages([]);
@@ -271,45 +284,20 @@ export default function AddEditScreen() {
           </ActionButton>
 
           <ThemedText type="defaultSemiBold">Images:</ThemedText>
-          <ThemedView
-            style={{
-              flexDirection: "row",
-              flexWrap: "wrap",
-            }}
-          >
-            {[...savedImages.filter((img) => !deletedImageIds.includes(img.id)), ...newImages].map(
-              (item) => (
-                <ThemedView key={item.id} style={{ position: "relative", margin: 5 }}>
-                  <Image
-                    source={{ uri: item.uri }}
-                    style={{ width: 100, height: 100, borderRadius: 8 }}
-                  />
-                  <Pressable
-                    onPress={() => {
-                      if (item.saved) {
-                        // delete saved images
-                        setDeleteImagesIds([...deletedImageIds, item.id]);
-                        console.log("Delete saved image:", item.id);
-                      } else {
-                        // remove just captured but unsaved images
-                        setNewImages(newImages.filter((img) => img.id !== item.id));
-                        console.log("Delete just captured image:", item.id);
-                      }
-                    }}
-                    style={{
-                      position: "absolute",
-                      top: 4,
-                      right: 4,
-                      backgroundColor: "white",
-                      padding: 6,
-                      borderRadius: 20,
-                    }}
-                  >
-                    <FontAwesome6 name="trash-can" size={24} color="red" />
-                  </Pressable>
-                </ThemedView>
-              ),
-            )}
+          <ThemedView style={styles.previewImagesContainer}>
+            {[...savedImages.filter((img) => !deletedSet.has(img.id)), ...newImages].map((item) => (
+              <ThemedView key={item.id} style={styles.imagePreviewContainer}>
+                <Image
+                  source={{ uri: item.uri }}
+                  style={styles.image}
+                  accessibilityRole="image"
+                  accessibilityLabel="Place Photo"
+                />
+                <Pressable onPress={() => handleDeleteImage(item)} style={styles.deleteImageButton}>
+                  <FontAwesome6 name="trash-can" size={24} color="red" />
+                </Pressable>
+              </ThemedView>
+            ))}
           </ThemedView>
 
           <ActionButton variant="primary" style={styles.button} onPress={pickImage}>
@@ -360,5 +348,19 @@ const styles = StyleSheet.create({
   },
   buttonSpacer: {
     height: 10,
+  },
+  previewImagesContainer: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+  },
+  imagePreviewContainer: { position: "relative", margin: 5 },
+  image: { width: 100, height: 100, borderRadius: 8 },
+  deleteImageButton: {
+    position: "absolute",
+    top: 4,
+    right: 4,
+    backgroundColor: "white",
+    padding: 6,
+    borderRadius: 20,
   },
 });

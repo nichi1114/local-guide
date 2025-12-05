@@ -45,7 +45,8 @@ export const addPlaceWithBackend = createAsyncThunk<
     body: formData,
   });
 
-  if (!res.ok) throw new Error("Failed to create place in backend");
+  if (!res.ok)
+    throw new Error(`Failed to create place in backend: ${res.status} ${res.statusText}`);
 });
 
 // Update a place in backend
@@ -93,7 +94,8 @@ export const updatePlaceWithBackend = createAsyncThunk<
     body: formData,
   });
 
-  if (!res.ok) throw new Error("Failed to update place in backend");
+  if (!res.ok)
+    throw new Error(`Failed to update place in backend: ${res.status} ${res.statusText}`);
 
   // Clear deleted images after successful upload
   dispatch(clearDeletedImages(placeId));
@@ -117,5 +119,6 @@ export const deletePlaceWithBackend = createAsyncThunk<
     },
   });
 
-  if (!res.ok) throw new Error("Failed to delete place in backend");
+  if (!res.ok)
+    throw new Error(`Failed to create delete in backend: ${res.status} ${res.statusText}`);
 });

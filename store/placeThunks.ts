@@ -44,7 +44,7 @@ export const savePlacesAsync = createAsyncThunk<
 
     return { places: state.places, localImages: state.localImages };
   } catch (err) {
-    console.error(err);
+    console.error("Failed to save places and images for userId:", userId, err);
     throw err;
   }
 });

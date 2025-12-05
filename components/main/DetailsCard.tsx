@@ -18,17 +18,14 @@ export default function DetailsCard({ place, images }: Props) {
       <ThemedText style={styles.text}>Category: {place.category}</ThemedText>
       <ThemedText style={styles.text}>Location: {place.location}</ThemedText>
       {place.note ? <ThemedText style={styles.text}>Note: {place.note}</ThemedText> : null}
-      <ThemedView
-        style={{
-          flexDirection: "row",
-          flexWrap: "wrap",
-        }}
-      >
+      <ThemedView style={styles.previewImagesContainer}>
         {images.map((item) => (
-          <ThemedView key={item.id} style={{ position: "relative", margin: 5 }}>
+          <ThemedView key={item.id} style={styles.imagePreviewContainer}>
             <Image
               source={{ uri: item.uri }}
-              style={{ width: 200, height: 200, borderRadius: 8 }}
+              style={styles.image}
+              accessibilityRole="image"
+              accessibilityLabel="Place Photo"
             />
           </ThemedView>
         ))}
@@ -42,4 +39,10 @@ const styles = StyleSheet.create({
     fontSize: 18,
     marginVertical: 5,
   },
+  previewImagesContainer: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+  },
+  imagePreviewContainer: { position: "relative", margin: 5 },
+  image: { width: 200, height: 200, borderRadius: 8 },
 });
