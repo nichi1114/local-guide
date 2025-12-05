@@ -43,7 +43,7 @@ export async function userCurrentLocation() {
   let { status } = await Location.requestForegroundPermissionsAsync();
 
   if (status !== "granted") {
-    Alert.alert("Permission denied");
+    Alert.alert("Location Permission denied");
     return;
   }
 
@@ -122,6 +122,25 @@ export default function AddEditScreen() {
 
     const address = await convertCoordsToAddress(coords.la, coords.long);
     setLocation(address);
+  };
+
+  const handleCameraPermission = async () => {
+    if (!permission) {
+      console.log("Permission is not initialized");
+      return;
+    }
+
+    if (!permission.granted) {
+      const response = await requestPermission();
+
+      if (response && response.granted) {
+        setCameraVisible(true);
+      } else {
+        Alert.alert("Camera Permission denied");
+      }
+    } else {
+      setCameraVisible(true);
+    }
   };
 
   const handleSubmit = async () => {
@@ -289,21 +308,16 @@ export default function AddEditScreen() {
           </ThemedView>
 
           {!permission || !permission.granted ? (
-            <ThemedView style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
-              <ThemedText type="defaultSemiBold">
-                We need your permission to use the camera
-              </ThemedText>
-              <ActionButton variant="primary" style={styles.button} onPress={requestPermission}>
-                Grant Permission
-              </ActionButton>
-            </ThemedView>
+            <ActionButton variant="primary" style={styles.button} onPress={handleCameraPermission}>
+              Take Photo
+            </ActionButton>
           ) : (
             <ActionButton
               variant="primary"
               style={styles.button}
               onPress={() => setCameraVisible(true)}
             >
-              Add Photos
+              Take Photo
             </ActionButton>
           )}
 
