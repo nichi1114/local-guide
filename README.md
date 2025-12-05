@@ -1,7 +1,10 @@
 # local-guide
 
 ## Team Information
-The names, student numbers, and preferred email addresses of all team members. Ensure these email addresses are active as they may be used for clarification requests.
+| Name           | Student Number | Email                |
+|----------------|---------------|----------------------|
+| Alice Example  | 12345678      | alice@example.com    |
+| Bob Example    | 87654321      | bob@example.com      |
 
 ## Motivation
 What motivated your team to spend time on this project? Describe the problem you’re solving and its significance.
