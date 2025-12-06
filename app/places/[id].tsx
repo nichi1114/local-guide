@@ -43,15 +43,15 @@ export default function DetailsScreen() {
 
       if (userId) {
         // local
-        await dispatch(savePlacesAsync(userId))
-          .then(() => console.log("Saved to AsyncStorage"))
-          .catch((err) => console.error("AsyncStorage save failed:", err));
+        await dispatch(savePlacesAsync(userId)).catch((err) =>
+          console.error("AsyncStorage save failed:", err),
+        );
       }
 
       // backend
-      dispatch(deletePlaceWithBackend({ placeId: id }))
-        .then(() => console.log("Delete place with Backend"))
-        .catch((err) => console.error("Backend delete place failed:", err));
+      dispatch(deletePlaceWithBackend({ placeId: id })).catch((err) =>
+        console.error("Backend delete place failed:", err),
+      );
     }
     // Navigate back without stacking another Home screen
     exitToPreviousOrHome(router, "/");

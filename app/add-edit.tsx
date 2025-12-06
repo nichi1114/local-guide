@@ -92,7 +92,7 @@ export default function AddEditScreen() {
   const [location, setLocation] = useState<string>(place?.location || "");
   const [note, setNote] = useState<string>(place?.note || "");
   const [newImages, setNewImages] = useState<LocalImage[]>([]);
-  const [deletedImageIds, setDeletedImagesIds] = useState<string[]>([]);
+  const [deletedImageIds, setDeletedImageIds] = useState<string[]>([]);
 
   const MEDIA_TYPE_LIBRARY = "library";
   const MEDIA_TYPE_CAMERA = "media";
@@ -182,12 +182,10 @@ export default function AddEditScreen() {
   const handleDeleteImage = (item: LocalImage) => {
     if (item.saved) {
       // delete saved images
-      setDeletedImagesIds([...deletedImageIds, item.id]);
-      console.log("Delete saved image:", item.id);
+      setDeletedImageIds([...deletedImageIds, item.id]);
     } else {
       // remove just captured but unsaved images
       setNewImages(newImages.filter((img) => img.id !== item.id));
-      console.log("Delete just captured image:", item.id);
     }
   };
 
@@ -230,7 +228,7 @@ export default function AddEditScreen() {
         dispatch(markImageDeleted({ placeId: place.id, imageIds: deletedImageIds }));
         dispatch(addLocalImages({ placeId: place.id, images: newImages }));
         setNewImages([]);
-        setDeletedImagesIds([]);
+        setDeletedImageIds([]);
       }
     } else {
       placeId = randomUUID();
@@ -246,26 +244,22 @@ export default function AddEditScreen() {
     }
 
     if (userId) {
-      await dispatch(savePlacesAsync(userId))
-        .then(() => console.log("Saved to AsyncStorage"))
-        .catch((err) => console.error("AsyncStorage save failed:", err));
+      await dispatch(savePlacesAsync(userId)).catch((err) =>
+        console.error("AsyncStorage save failed:", err),
+      );
     }
 
     if (placeId) {
       if (place) {
         // update with backend
-        dispatch(updatePlaceWithBackend({ placeId }))
-          .then(() => console.log("Update place to backend"))
-          .catch((err) => {
-            console.error("Backend update place failed:", err);
-          });
+        dispatch(updatePlaceWithBackend({ placeId })).catch((err) => {
+          console.error("Backend update place failed:", err);
+        });
       } else {
         // add with backend
-        dispatch(addPlaceWithBackend({ placeId }))
-          .then(() => console.log("Add place to backend"))
-          .catch((err) => {
-            console.error("Backend add place failed:", err);
-          });
+        dispatch(addPlaceWithBackend({ placeId })).catch((err) => {
+          console.error("Backend add place failed:", err);
+        });
       }
     }
 
