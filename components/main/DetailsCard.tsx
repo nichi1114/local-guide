@@ -19,13 +19,13 @@ export default function DetailsCard({ place, images }: Props) {
       <ThemedText style={styles.text}>Location: {place.location}</ThemedText>
       {place.note ? <ThemedText style={styles.text}>Note: {place.note}</ThemedText> : null}
       <ThemedView style={styles.previewImagesContainer}>
-        {images.map((item) => (
+        {images.map((item, index) => (
           <ThemedView key={item.id} style={styles.imagePreviewContainer}>
             <Image
               source={{ uri: item.uri }}
               style={styles.image}
               accessibilityRole="image"
-              accessibilityLabel="Place Photo"
+              accessibilityLabel={`Place photo ${index + 1}${place.name ? ` for ${place.name}` : ""}`}
             />
           </ThemedView>
         ))}
