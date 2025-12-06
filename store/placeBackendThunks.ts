@@ -5,6 +5,13 @@ import { RootState } from ".";
 import { clearDeletedImages, markImagesSaved } from "./placeSlice";
 import { savePlacesAsync } from "./placeThunks";
 
+function getImageFileMeta(uri: string) {
+  const filename = uri.split("/").pop() || "image.jpg";
+  const ext = filename.split(".").pop();
+  const type = ext ? `image/${ext}` : "image/jpeg";
+  return { filename, type };
+}
+
 // Add a place to backend
 export const addPlaceWithBackend = createAsyncThunk<
   void,
@@ -31,8 +38,7 @@ export const addPlaceWithBackend = createAsyncThunk<
 
   imagesToUpload.forEach((img) => {
     formData.append("image_id", img.id);
-    const filename = img.uri.split("/").pop();
-    const imageType = filename ? `image/${filename.split(".").pop()}` : "image/jpeg";
+    const { filename, type: imageType } = getImageFileMeta(img.uri);
     formData.append("image", {
       uri: img.uri,
       name: filename,
@@ -84,8 +90,7 @@ export const updatePlaceWithBackend = createAsyncThunk<
 
   imagesToUpload.forEach((img) => {
     formData.append("image_id", img.id);
-    const filename = img.uri.split("/").pop();
-    const imageType = filename ? `image/${filename.split(".").pop()}` : "image/jpeg";
+    const { filename, type: imageType } = getImageFileMeta(img.uri);
     formData.append("image", {
       uri: img.uri,
       name: filename,
