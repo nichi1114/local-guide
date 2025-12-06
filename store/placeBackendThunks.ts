@@ -29,12 +29,11 @@ export const addPlaceWithBackend = createAsyncThunk<
 
   imagesToUpload.forEach((img) => {
     formData.append("image_id", img.id);
-    const fileExtension = img.uri.split(".").pop();
-    const imageType = fileExtension === "png" ? "image/png" : "image/jpeg";
-    const fileName = `${img.id}.${fileExtension}`;
+    const filename = img.uri.split("/").pop();
+    const imageType = filename ? `image/${filename.split(".").pop()}` : "image/jpeg";
     formData.append("image", {
       uri: img.uri,
-      name: fileName,
+      name: filename,
       type: imageType,
     } as any);
   });
@@ -76,12 +75,11 @@ export const updatePlaceWithBackend = createAsyncThunk<
 
   imagesToUpload.forEach((img) => {
     formData.append("image_id", img.id);
-    const fileExtension = img.uri.split(".").pop();
-    const imageType = fileExtension === "png" ? "image/png" : "image/jpeg";
-    const fileName = `${img.id}.${fileExtension}`;
+    const filename = img.uri.split("/").pop();
+    const imageType = filename ? `image/${filename.split(".").pop()}` : "image/jpeg";
     formData.append("image", {
       uri: img.uri,
-      name: fileName,
+      name: filename,
       type: imageType,
     } as any);
   });
