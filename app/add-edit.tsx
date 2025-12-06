@@ -36,6 +36,8 @@ const imagePickerOptions = {
   aspect: [4, 3] as [number, number],
   quality: 1,
 };
+const MEDIA_TYPE_LIBRARY = "library";
+const MEDIA_TYPE_CAMERA = "camera";
 
 function isEmptyInput(value: string): boolean {
   return value.trim() === "";
@@ -101,8 +103,6 @@ export default function AddEditScreen() {
   const [newImages, setNewImages] = useState<LocalImage[]>([]);
   const [deletedImageIds, setDeletedImageIds] = useState<string[]>([]);
 
-  const MEDIA_TYPE_LIBRARY = "library";
-  const MEDIA_TYPE_CAMERA = "camera";
   const deletedSet = useMemo(() => new Set(deletedImageIds), [deletedImageIds]);
 
   useEffect(() => {
