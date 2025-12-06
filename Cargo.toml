@@ -25,6 +25,10 @@ mime_guess = "2.0.4"
 name = "local-guide-backend"
 path = "backend/src/main.rs"
 
+[[bin]]
+name = "local-guide-backend-mock"
+path = "backend/src/mock_main.rs"
+
 [dev-dependencies]
 wiremock = { version = "0.6.0" }
 tower = { version = "0.5", features = ["util"] }
