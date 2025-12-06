@@ -7,7 +7,8 @@ import { savePlacesAsync } from "./placeThunks";
 
 function getImageFileMeta(uri: string) {
   const filename = uri.split("/").pop() || "image.jpg";
-  const ext = filename.split(".").pop();
+  const parts = filename.split(".");
+  const ext = parts.length > 1 ? parts.pop() : null;
   const type = ext ? `image/${ext}` : "image/jpeg";
   return { filename, type };
 }
