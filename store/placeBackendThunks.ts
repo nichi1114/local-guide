@@ -8,8 +8,21 @@ import { savePlacesAsync } from "./placeThunks";
 function getImageFileMeta(uri: string) {
   const filename = uri.split("/").pop() || "image.jpg";
   const parts = filename.split(".");
-  const ext = parts.length > 1 ? parts.pop() : null;
-  const type = ext ? `image/${ext}` : "image/jpeg";
+  const ext = parts.length > 1 ? parts.pop()?.toLowerCase() : null;
+  const extToMime: Record<string, string> = {
+    bmp: "image/bmp",
+    gif: "image/gif",
+    heic: "image/heic",
+    heif: "image/heif",
+    jpg: "image/jpeg",
+    jpeg: "image/jpeg",
+    png: "image/png",
+    svg: "image/svg+xml",
+    tif: "image/tiff",
+    tiff: "image/tiff",
+    webp: "image/webp",
+  };
+  const type = ext && extToMime[ext] ? extToMime[ext] : "image/jpeg";
   return { filename, type };
 }
 
