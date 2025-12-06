@@ -31,7 +31,7 @@ import {
 import { shallowEqual, useDispatch, useSelector } from "react-redux";
 
 const imagePickerOptions = {
-  mediaTypes: ["images"],
+  mediaTypes: ImagePicker.MediaTypeOptions.Images,
   allowsEditing: true,
   aspect: [4, 3] as [number, number],
   quality: 1,
