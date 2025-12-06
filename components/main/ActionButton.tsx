@@ -5,14 +5,24 @@ import { Pressable, StyleProp, StyleSheet, Text, ViewStyle } from "react-native"
 
 type Variant = "primary" | "danger";
 
-type Props = {
+type BaseProps = {
   onPress: () => void;
-  children: ReactNode;
   variant: Variant;
   style?: StyleProp<ViewStyle>;
   testID?: string | undefined;
+};
+
+type StringChildProps = BaseProps & {
+  children: string;
   accessibilityLabel?: string;
 };
+
+type NonStringChildProps = BaseProps & {
+  children: Exclude<ReactNode, string>;
+  accessibilityLabel: string;
+};
+
+type Props = StringChildProps | NonStringChildProps;
 
 export default function ActionButton({
   onPress,
@@ -39,7 +49,9 @@ export default function ActionButton({
       onPress={onPress}
       testID={testID}
       accessibilityRole="button"
-      accessibilityLabel={accessibilityLabel ?? (typeof children === "string" ? children : undefined)}
+      accessibilityLabel={
+        accessibilityLabel ?? (typeof children === "string" ? children : undefined)
+      }
     >
       {typeof children === "string" ? <Text style={styles.text}>{children}</Text> : children}
     </Pressable>

@@ -337,7 +337,7 @@ export default function AddEditScreen() {
               variant="primary"
               style={[styles.button, styles.mediaButton]}
               onPress={pickImage}
-              accessibilityLabel="Pick Images"
+              accessibilityLabel="Pick an image from library"
             >
               <FontAwesome6 name="image" size={20} color={globalColors.black} />
             </ActionButton>
@@ -345,7 +345,7 @@ export default function AddEditScreen() {
               variant="primary"
               style={[styles.button, styles.mediaButton, styles.mediaButtonTrailing]}
               onPress={takePhoto}
-              accessibilityLabel="Take Photo"
+              accessibilityLabel="Take a photo with camera"
             >
               <FontAwesome6 name="camera" size={20} color={globalColors.black} />
             </ActionButton>
