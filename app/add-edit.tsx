@@ -224,8 +224,6 @@ export default function AddEditScreen() {
         );
         dispatch(markImageDeleted({ placeId: place.id, imageIds: deletedImageIds }));
         dispatch(addLocalImages({ placeId: place.id, images: newImages }));
-        setNewImages([]);
-        setDeletedImageIds([]);
       }
     } else {
       placeId = randomUUID();
@@ -237,7 +235,6 @@ export default function AddEditScreen() {
         note,
       };
       dispatch(addPlace({ place: newPlace, images: newImages }));
-      setNewImages([]);
     }
 
     if (userId) {
@@ -257,8 +254,13 @@ export default function AddEditScreen() {
         }
       } catch (err) {
         console.error("Backend sync failed:", err);
+        Alert.alert("Sync Failed", "We couldn't save your changes to the server. Please try again.");
+        return;
       }
     }
+
+    setNewImages([]);
+    setDeletedImageIds([]);
 
     exitToPreviousOrHome(router, "/");
   };
