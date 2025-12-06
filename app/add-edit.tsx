@@ -149,7 +149,7 @@ export default function AddEditScreen() {
       uri: asset.uri,
       saved: false,
     };
-    setNewImages([...newImages, newImage]);
+    setNewImages((prev) => [...prev, newImage]);
   }
 
   const pickImage = async () => {
