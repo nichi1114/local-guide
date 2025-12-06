@@ -18,7 +18,7 @@ import { Image } from "expo-image";
 import * as ImagePicker from "expo-image-picker";
 import * as Location from "expo-location";
 import { useLocalSearchParams, useRouter } from "expo-router";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
   Alert,
   KeyboardAvoidingView,
@@ -103,7 +103,7 @@ export default function AddEditScreen() {
     quality: 1,
   };
 
-  const deletedSet = new Set(deletedImageIds);
+  const deletedSet = useMemo(() => new Set(deletedImageIds), [deletedImageIds]);
 
   useEffect(() => {
     if (place) {
