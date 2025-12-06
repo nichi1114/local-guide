@@ -28,7 +28,7 @@ import {
   StyleSheet,
   TextInput,
 } from "react-native";
-import { useDispatch, useSelector } from "react-redux";
+import { shallowEqual, useDispatch, useSelector } from "react-redux";
 
 function isEmptyInput(value: string): boolean {
   return value.trim() === "";
@@ -82,15 +82,9 @@ export default function AddEditScreen() {
     typeof id === "string" ? selectPlaceById(state, id) : undefined,
   );
 
-  const selectCurrentImages = (state: RootState) => {
-    if (typeof id === "string") {
-      return selectImagesById(state, id);
-    } else {
-      return [];
-    }
-  };
-
-  const savedImages = useAppSelector(selectCurrentImages);
+  const savedImages = useAppSelector((state: RootState) => {
+    return typeof id === "string" ? selectImagesById(state, id) : [];
+  }, shallowEqual);
 
   // Create states
   const [name, setName] = useState<string>(place?.name || "");

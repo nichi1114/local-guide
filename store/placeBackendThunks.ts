@@ -29,10 +29,13 @@ export const addPlaceWithBackend = createAsyncThunk<
 
   imagesToUpload.forEach((img) => {
     formData.append("image_id", img.id);
+    const fileExtension = img.uri.split(".").pop();
+    const imageType = fileExtension === "png" ? "image/png" : "image/jpeg";
+    const fileName = `${img.id}.${fileExtension}`;
     formData.append("image", {
       uri: img.uri,
-      name: `${img.id}.jpg`,
-      type: "image/jpeg",
+      name: fileName,
+      type: imageType,
     } as any);
   });
 
@@ -40,7 +43,6 @@ export const addPlaceWithBackend = createAsyncThunk<
     method: "POST",
     headers: {
       Authorization: `Bearer ${token}`,
-      "Content-Type": "multipart/form-data",
     },
     body: formData,
   });
@@ -74,10 +76,13 @@ export const updatePlaceWithBackend = createAsyncThunk<
 
   imagesToUpload.forEach((img) => {
     formData.append("image_id", img.id);
+    const fileExtension = img.uri.split(".").pop();
+    const imageType = fileExtension === "png" ? "image/png" : "image/jpeg";
+    const fileName = `${img.id}.${fileExtension}`;
     formData.append("image", {
       uri: img.uri,
-      name: `${img.id}.jpg`,
-      type: "image/jpeg",
+      name: fileName,
+      type: imageType,
     } as any);
   });
 
@@ -89,7 +94,6 @@ export const updatePlaceWithBackend = createAsyncThunk<
     method: "PATCH",
     headers: {
       Authorization: `Bearer ${token}`,
-      "Content-Type": "multipart/form-data",
     },
     body: formData,
   });
