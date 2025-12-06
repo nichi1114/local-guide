@@ -179,7 +179,7 @@ export default function AddEditScreen() {
   const handleDeleteImage = (item: LocalImage) => {
     if (item.saved) {
       // delete saved images
-      setDeletedImageIds([...deletedImageIds, item.id]);
+      setDeletedImageIds((prev) => [...prev, item.id]);
     } else {
       // remove just captured but unsaved images
       setNewImages(newImages.filter((img) => img.id !== item.id));
