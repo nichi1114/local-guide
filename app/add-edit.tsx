@@ -100,6 +100,9 @@ export default function AddEditScreen() {
   const [newImages, setNewImages] = useState<LocalImage[]>([]);
   const [deletedImageIds, setDeletedImagesIds] = useState<string[]>([]);
 
+  const MEDIA_TYPE_LIBRARY = "library";
+  const MEDIA_TYPE_CAMERA = "media";
+
   const deletedSet = new Set(deletedImageIds);
 
   useEffect(() => {
@@ -119,11 +122,56 @@ export default function AddEditScreen() {
     setLocation(address);
   };
 
-  const pickImage = async () => {
-    const permissionResult = await ImagePicker.requestMediaLibraryPermissionsAsync();
+  const grantImagePermissions = async (type: string) => {
+    if (type === MEDIA_TYPE_LIBRARY) {
+      const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+      if (status !== "granted") {
+        Alert.alert("Permission required", "Permission to access the media library is required.");
+        return false;
+      }
+    } else if (type === MEDIA_TYPE_CAMERA) {
+      const { status } = await ImagePicker.requestCameraPermissionsAsync();
+      if (status !== "granted") {
+        Alert.alert("Permission required", "Permission to access the camera is required.");
+        return false;
+      }
+    }
+    return true;
+  };
 
-    if (!permissionResult.granted) {
-      Alert.alert("Permission required", "Permission to access the media library is required.");
+  function handleImagePickerResult(result: ImagePicker.ImagePickerResult) {
+    if (!result.canceled) {
+      const uri = result.assets[0].uri;
+      const newImage: LocalImage = {
+        id: randomUUID(),
+        uri: uri,
+        saved: false,
+      };
+      setNewImages([...newImages, newImage]);
+    }
+  }
+
+  const pickImage = async () => {
+    const permissionResult = await grantImagePermissions(MEDIA_TYPE_LIBRARY);
+
+    if (!permissionResult) {
+      return;
+    }
+
+    let result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ["images"],
+      allowsEditing: true,
+      aspect: [4, 3],
+      quality: 1,
+    });
+
+    handleImagePickerResult(result);
+  };
+
+  const takePhoto = async () => {
+    const permissionResult = await grantImagePermissions(MEDIA_TYPE_CAMERA);
+
+    if (!permissionResult) {
       return;
     }
 
@@ -134,15 +182,7 @@ export default function AddEditScreen() {
       quality: 1,
     });
 
-    if (!result.canceled) {
-      const uri = result.assets[0].uri;
-      const newImage: LocalImage = {
-        id: randomUUID(),
-        uri: uri,
-        saved: false,
-      };
-      setNewImages([...newImages, newImage]);
-    }
+    handleImagePickerResult(result);
   };
 
   const handleDeleteImage = (item: LocalImage) => {
@@ -300,9 +340,14 @@ export default function AddEditScreen() {
             ))}
           </ThemedView>
 
-          <ActionButton variant="primary" style={styles.button} onPress={pickImage}>
-            Take Photo
-          </ActionButton>
+          <ThemedView>
+            <ActionButton variant="primary" style={styles.button} onPress={pickImage}>
+              Pick Images
+            </ActionButton>
+            <ActionButton variant="primary" style={styles.button} onPress={takePhoto}>
+              Take Photo
+            </ActionButton>
+          </ThemedView>
 
           <ThemedText type="defaultSemiBold">Note:</ThemedText>
           <TextInput
