@@ -96,6 +96,12 @@ export default function AddEditScreen() {
 
   const MEDIA_TYPE_LIBRARY = "library";
   const MEDIA_TYPE_CAMERA = "media";
+  const imagePickerOptions = {
+    mediaTypes: ["images"],
+    allowsEditing: true,
+    aspect: [4, 3] as [number, number],
+    quality: 1,
+  };
 
   const deletedSet = new Set(deletedImageIds);
 
@@ -152,12 +158,7 @@ export default function AddEditScreen() {
       return;
     }
 
-    let result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ["images"],
-      allowsEditing: true,
-      aspect: [4, 3],
-      quality: 1,
-    });
+    let result = await ImagePicker.launchImageLibraryAsync(imagePickerOptions);
 
     handleImagePickerResult(result);
   };
@@ -169,12 +170,7 @@ export default function AddEditScreen() {
       return;
     }
 
-    let result = await ImagePicker.launchCameraAsync({
-      mediaTypes: ["images"],
-      allowsEditing: true,
-      aspect: [4, 3],
-      quality: 1,
-    });
+    let result = await ImagePicker.launchCameraAsync(imagePickerOptions);
 
     handleImagePickerResult(result);
   };
