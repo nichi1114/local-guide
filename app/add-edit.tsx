@@ -182,7 +182,7 @@ export default function AddEditScreen() {
       setDeletedImageIds((prev) => [...prev, item.id]);
     } else {
       // remove just captured but unsaved images
-      setNewImages(newImages.filter((img) => img.id !== item.id));
+      setNewImages((prev) => prev.filter((img) => img.id !== item.id));
     }
   };
 
