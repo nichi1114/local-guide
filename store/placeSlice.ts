@@ -84,15 +84,13 @@ export const placeSlice = createSlice({
   extraReducers: (builder) => {
     builder.addCase(loadPlacesAsync.fulfilled, (state, action) => {
       const { places, localImages } = action.payload;
-      if (localImages) {
-        Object.values(localImages).forEach((imagesArray) => {
-          imagesArray.forEach((image) => {
-            image.saved = image.saved ?? true;
-          });
+      Object.values(localImages).forEach((imagesArray) => {
+        imagesArray.forEach((image) => {
+          image.saved = image.saved ?? true;
         });
-      }
-      state.places = places || [];
-      state.localImages = localImages || {};
+      });
+      state.places = places;
+      state.localImages = localImages;
     });
     builder.addCase(savePlacesAsync.fulfilled, (state, action) => {
       const { places, localImages } = action.payload;
