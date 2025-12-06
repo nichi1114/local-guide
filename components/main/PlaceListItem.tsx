@@ -24,15 +24,14 @@ export default function PlaceListItem({ place }: Props) {
   const userId = useAppSelector(selectPlaceUserId);
 
   const handleDelete = async () => {
-    // update state
-    dispatch(deletePlace(place.id));
-
-    // save to storage
-    if (userId) {
-      await dispatch(savePlacesAsync(userId));
-    }
     try {
       await dispatch(deletePlaceWithBackend({ placeId: place.id })).unwrap();
+      // update state after backend succeeds
+      dispatch(deletePlace(place.id));
+      // save to storage
+      if (userId) {
+        await dispatch(savePlacesAsync(userId));
+      }
     } catch (err) {
       console.error("Backend delete place failed:", err);
     }

@@ -39,24 +39,23 @@ export default function DetailsScreen() {
 
   const handleDelete = async () => {
     if (typeof id === "string") {
-      dispatch(deletePlace(id));
-
-      if (userId) {
-        // local
-        await dispatch(savePlacesAsync(userId)).catch((err) =>
-          console.error("AsyncStorage save failed:", err),
-        );
-      }
-
       // backend
       try {
         await dispatch(deletePlaceWithBackend({ placeId: id })).unwrap();
+        dispatch(deletePlace(id));
+
+        if (userId) {
+          // local
+          await dispatch(savePlacesAsync(userId)).catch((err) =>
+            console.error("AsyncStorage save failed:", err),
+          );
+        }
+        // Navigate back without stacking another Home screen
+        exitToPreviousOrHome(router, "/");
       } catch (err) {
         console.error("Backend delete place failed:", err);
       }
     }
-    // Navigate back without stacking another Home screen
-    exitToPreviousOrHome(router, "/");
   };
 
   return (
