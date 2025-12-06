@@ -52,8 +52,7 @@ export const placeSlice = createSlice({
     addLocalImages: (state, action: PayloadAction<{ placeId: string; images: LocalImage[] }>) => {
       const { placeId, images } = action.payload;
 
-      if (!state.localImages[placeId]) state.localImages[placeId] = [];
-      state.localImages[placeId] = state.localImages[placeId].concat(images);
+      state.localImages[placeId] = (state.localImages[placeId] || []).concat(images);
     },
     markImagesSaved: (state, action: PayloadAction<string>) => {
       const placeId = action.payload;
