@@ -250,16 +250,16 @@ export default function AddEditScreen() {
     }
 
     if (placeId) {
-      if (place) {
-        // update with backend
-        dispatch(updatePlaceWithBackend({ placeId })).catch((err) => {
-          console.error("Backend update place failed:", err);
-        });
-      } else {
-        // add with backend
-        dispatch(addPlaceWithBackend({ placeId })).catch((err) => {
-          console.error("Backend add place failed:", err);
-        });
+      try {
+        if (place) {
+          // update with backend
+          await dispatch(updatePlaceWithBackend({ placeId })).unwrap();
+        } else {
+          // add with backend
+          await dispatch(addPlaceWithBackend({ placeId })).unwrap();
+        }
+      } catch (err) {
+        console.error("Backend sync failed:", err);
       }
     }
 
