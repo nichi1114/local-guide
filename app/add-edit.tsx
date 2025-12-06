@@ -309,19 +309,24 @@ export default function AddEditScreen() {
 
           <ThemedText type="defaultSemiBold">Images:</ThemedText>
           <ThemedView style={styles.previewImagesContainer}>
-            {[...savedImages.filter((img) => !deletedSet.has(img.id)), ...newImages].map((item) => (
-              <ThemedView key={item.id} style={styles.imagePreviewContainer}>
-                <Image
-                  source={{ uri: item.uri }}
-                  style={styles.image}
-                  accessibilityRole="image"
-                  accessibilityLabel="Place Photo"
-                />
-                <Pressable onPress={() => handleDeleteImage(item)} style={styles.deleteImageButton}>
-                  <FontAwesome6 name="trash-can" size={24} color="red" />
-                </Pressable>
-              </ThemedView>
-            ))}
+            {[...savedImages.filter((img) => !deletedSet.has(img.id)), ...newImages].map(
+              (item, index) => (
+                <ThemedView key={item.id} style={styles.imagePreviewContainer}>
+                  <Image
+                    source={{ uri: item.uri }}
+                    style={styles.image}
+                    accessibilityRole="image"
+                    accessibilityLabel={`Place photo ${index + 1}${name ? ` for ${name}` : ""}`}
+                  />
+                  <Pressable
+                    onPress={() => handleDeleteImage(item)}
+                    style={styles.deleteImageButton}
+                  >
+                    <FontAwesome6 name="trash-can" size={24} color="red" />
+                  </Pressable>
+                </ThemedView>
+              ),
+            )}
           </ThemedView>
 
           <ThemedView style={styles.mediaButtonsRow}>
