@@ -2,7 +2,8 @@ import { API_BASE_URL } from "@/constants/env";
 import { LocalImage } from "@/types/place";
 import { createAsyncThunk } from "@reduxjs/toolkit";
 import { RootState } from ".";
-import { clearDeletedImages } from "./placeSlice";
+import { clearDeletedImages, markImagesSaved } from "./placeSlice";
+import { savePlacesAsync } from "./placeThunks";
 
 // Add a place to backend
 export const addPlaceWithBackend = createAsyncThunk<
@@ -18,7 +19,8 @@ export const addPlaceWithBackend = createAsyncThunk<
   const place = placeState.places.find((p) => p.id === placeId);
   if (!place) throw new Error("Place not found");
 
-  const imagesToUpload: LocalImage[] = placeState.localImages[placeId] || [];
+  const imagesToUpload: LocalImage[] =
+    placeState.localImages[placeId]?.filter((img) => !img.saved) || [];
   const formData = new FormData();
 
   formData.append("id", place.id);
@@ -48,6 +50,12 @@ export const addPlaceWithBackend = createAsyncThunk<
 
   if (!res.ok)
     throw new Error(`Failed to create place in backend: ${res.status} ${res.statusText}`);
+
+  dispatch(markImagesSaved(placeId));
+  const userId = getState().poi.userId;
+  if (userId) {
+    await dispatch(savePlacesAsync(userId));
+  }
 });
 
 // Update a place in backend
@@ -64,7 +72,8 @@ export const updatePlaceWithBackend = createAsyncThunk<
   const place = placeState.places.find((p) => p.id === placeId);
   if (!place) throw new Error("Place not found");
 
-  const imagesToUpload = placeState.localImages[placeId] || [];
+  const imagesToUpload =
+    placeState.localImages[placeId]?.filter((img) => !img.saved) || [];
   const imagesToDelete = placeState.deletedImages[placeId] || [];
 
   const formData = new FormData();
@@ -99,6 +108,11 @@ export const updatePlaceWithBackend = createAsyncThunk<
   if (!res.ok)
     throw new Error(`Failed to update place in backend: ${res.status} ${res.statusText}`);
 
+  dispatch(markImagesSaved(placeId));
+  const userId = getState().poi.userId;
+  if (userId) {
+    await dispatch(savePlacesAsync(userId));
+  }
   // Clear deleted images after successful upload
   dispatch(clearDeletedImages(placeId));
 });

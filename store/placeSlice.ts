@@ -29,9 +29,8 @@ export const placeSlice = createSlice({
 
       const placeId = newPlace.id;
       const images = action.payload.images;
-      const newImages = images.map((img) => ({ ...img, saved: true }));
       if (!state.localImages[placeId]) state.localImages[placeId] = [];
-      state.localImages[placeId] = state.localImages[placeId].concat(newImages);
+      state.localImages[placeId] = state.localImages[placeId].concat(images);
     },
     updatePlace: (state, action: PayloadAction<{ id: string; updated: Omit<Place, "id"> }>) => {
       const { id, updated } = action.payload;
@@ -53,9 +52,17 @@ export const placeSlice = createSlice({
     addLocalImages: (state, action: PayloadAction<{ placeId: string; images: LocalImage[] }>) => {
       const { placeId, images } = action.payload;
 
-      const newImages = images.map((img) => ({ ...img, saved: true }));
       if (!state.localImages[placeId]) state.localImages[placeId] = [];
-      state.localImages[placeId] = state.localImages[placeId].concat(newImages);
+      state.localImages[placeId] = state.localImages[placeId].concat(images);
+    },
+    markImagesSaved: (state, action: PayloadAction<string>) => {
+      const placeId = action.payload;
+      if (!state.localImages[placeId]) return;
+
+      state.localImages[placeId] = state.localImages[placeId].map((img) => ({
+        ...img,
+        saved: true,
+      }));
     },
     clearLocalImages: (state, action: PayloadAction<string>) => {
       delete state.localImages[action.payload];
@@ -80,7 +87,7 @@ export const placeSlice = createSlice({
       if (localImages) {
         Object.values(localImages).forEach((imagesArray) => {
           imagesArray.forEach((image) => {
-            image.saved = true;
+            image.saved = image.saved ?? true;
           });
         });
       }
@@ -103,6 +110,7 @@ export const {
   setPlaces,
   clearPlaces,
   addLocalImages,
+  markImagesSaved,
   clearLocalImages,
   markImageDeleted,
   clearDeletedImages,
