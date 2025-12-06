@@ -334,12 +334,22 @@ export default function AddEditScreen() {
             ))}
           </ThemedView>
 
-          <ThemedView>
-            <ActionButton variant="primary" style={styles.button} onPress={pickImage}>
-              Pick Images
+          <ThemedView style={styles.mediaButtonsRow}>
+            <ActionButton
+              variant="primary"
+              style={[styles.button, styles.mediaButton]}
+              onPress={pickImage}
+              accessibilityLabel="Pick Images"
+            >
+              <FontAwesome6 name="image" size={20} color={globalColors.black} />
             </ActionButton>
-            <ActionButton variant="primary" style={styles.button} onPress={takePhoto}>
-              Take Photo
+            <ActionButton
+              variant="primary"
+              style={[styles.button, styles.mediaButton, styles.mediaButtonTrailing]}
+              onPress={takePhoto}
+              accessibilityLabel="Take Photo"
+            >
+              <FontAwesome6 name="camera" size={20} color={globalColors.black} />
             </ActionButton>
           </ThemedView>
 
@@ -391,6 +401,16 @@ const styles = StyleSheet.create({
   previewImagesContainer: {
     flexDirection: "row",
     flexWrap: "wrap",
+  },
+  mediaButtonsRow: {
+    flexDirection: "row",
+  },
+  mediaButton: {
+    flex: 1,
+    marginRight: 10,
+  },
+  mediaButtonTrailing: {
+    marginRight: 0,
   },
   imagePreviewContainer: { position: "relative", margin: 5 },
   image: { width: 100, height: 100, borderRadius: 8 },
