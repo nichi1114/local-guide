@@ -49,9 +49,11 @@ export default function DetailsScreen() {
       }
 
       // backend
-      dispatch(deletePlaceWithBackend({ placeId: id })).catch((err) =>
-        console.error("Backend delete place failed:", err),
-      );
+      try {
+        await dispatch(deletePlaceWithBackend({ placeId: id })).unwrap();
+      } catch (err) {
+        console.error("Backend delete place failed:", err);
+      }
     }
     // Navigate back without stacking another Home screen
     exitToPreviousOrHome(router, "/");

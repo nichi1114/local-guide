@@ -31,9 +31,11 @@ export default function PlaceListItem({ place }: Props) {
     if (userId) {
       await dispatch(savePlacesAsync(userId));
     }
-    dispatch(deletePlaceWithBackend({ placeId: place.id })).catch((err) =>
-      console.error("Backend delete place failed:", err),
-    );
+    try {
+      await dispatch(deletePlaceWithBackend({ placeId: place.id })).unwrap();
+    } catch (err) {
+      console.error("Backend delete place failed:", err);
+    }
   };
 
   return (
