@@ -140,15 +140,16 @@ export default function AddEditScreen() {
   };
 
   function handleImagePickerResult(result: ImagePicker.ImagePickerResult) {
-    if (!result.canceled) {
-      const uri = result.assets[0].uri;
-      const newImage: LocalImage = {
-        id: randomUUID(),
-        uri: uri,
-        saved: false,
-      };
-      setNewImages([...newImages, newImage]);
-    }
+    if (result.canceled) return;
+    const asset = result.assets?.[0];
+    if (!asset?.uri) return;
+
+    const newImage: LocalImage = {
+      id: randomUUID(),
+      uri: asset.uri,
+      saved: false,
+    };
+    setNewImages([...newImages, newImage]);
   }
 
   const pickImage = async () => {
