@@ -23,13 +23,13 @@ export default function PlaceListItem({ place }: Props) {
   const dispatch = useDispatch<AppDispatch>();
   const userId = useAppSelector(selectPlaceUserId);
 
-  const handleDelete = () => {
+  const handleDelete = async () => {
     // update state
     dispatch(deletePlace(place.id));
 
     // save to storage
     if (userId) {
-      dispatch(savePlacesAsync(userId));
+      await dispatch(savePlacesAsync(userId));
     }
     dispatch(deletePlaceWithBackend({ placeId: place.id }))
       .then(() => console.log("Delete place with Backend"))

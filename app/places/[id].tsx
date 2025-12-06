@@ -37,13 +37,13 @@ export default function DetailsScreen() {
     );
   }
 
-  const handleDelete = () => {
+  const handleDelete = async () => {
     if (typeof id === "string") {
       dispatch(deletePlace(id));
 
       if (userId) {
         // local
-        dispatch(savePlacesAsync(userId))
+        await dispatch(savePlacesAsync(userId))
           .then(() => console.log("Saved to AsyncStorage"))
           .catch((err) => console.error("AsyncStorage save failed:", err));
       }
