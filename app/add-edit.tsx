@@ -30,6 +30,13 @@ import {
 } from "react-native";
 import { shallowEqual, useDispatch, useSelector } from "react-redux";
 
+const imagePickerOptions = {
+  mediaTypes: ["images"],
+  allowsEditing: true,
+  aspect: [4, 3] as [number, number],
+  quality: 1,
+};
+
 function isEmptyInput(value: string): boolean {
   return value.trim() === "";
 }
@@ -96,13 +103,6 @@ export default function AddEditScreen() {
 
   const MEDIA_TYPE_LIBRARY = "library";
   const MEDIA_TYPE_CAMERA = "camera";
-  const imagePickerOptions = {
-    mediaTypes: ["images"],
-    allowsEditing: true,
-    aspect: [4, 3] as [number, number],
-    quality: 1,
-  };
-
   const deletedSet = useMemo(() => new Set(deletedImageIds), [deletedImageIds]);
 
   useEffect(() => {
