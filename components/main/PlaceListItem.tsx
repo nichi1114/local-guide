@@ -1,6 +1,8 @@
 import { AppDispatch } from "@/store";
 import { useAppSelector } from "@/store/hooks";
-import { deletePlace, selectPlaceUserId } from "@/store/placeSlice";
+import { deletePlaceWithBackend } from "@/store/placeBackendThunks";
+import { selectPlaceUserId } from "@/store/placeSelectors";
+import { deletePlace } from "@/store/placeSlice";
 import { savePlacesAsync } from "@/store/placeThunks";
 import { Place } from "@/types/place";
 import { useRouter } from "expo-router";
@@ -21,14 +23,17 @@ export default function PlaceListItem({ place }: Props) {
   const dispatch = useDispatch<AppDispatch>();
   const userId = useAppSelector(selectPlaceUserId);
 
-  const handleDelete = () => {
+  const handleDelete = async () => {
     // update state
     dispatch(deletePlace(place.id));
 
     // save to storage
     if (userId) {
-      dispatch(savePlacesAsync(userId));
+      await dispatch(savePlacesAsync(userId));
     }
+    dispatch(deletePlaceWithBackend({ placeId: place.id }))
+      .then(() => console.log("Delete place with Backend"))
+      .catch((err) => console.error("Backend delete place failed:", err));
   };
 
   return (

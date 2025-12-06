@@ -4,12 +4,14 @@ import { ThemedText } from "@/components/themed-text";
 import { ThemedView } from "@/components/themed-view";
 import { RootState } from "@/store";
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
-import { deletePlace, selectPlaceById, selectPlaceUserId } from "@/store/placeSlice";
+import { deletePlaceWithBackend } from "@/store/placeBackendThunks";
+import { selectImagesById, selectPlaceById, selectPlaceUserId } from "@/store/placeSelectors";
+import { deletePlace } from "@/store/placeSlice";
 import { savePlacesAsync } from "@/store/placeThunks";
 import { globalStyles } from "@/styles/globalStyles";
 import { exitToPreviousOrHome } from "@/utils/navigation";
 import { useLocalSearchParams, useRouter } from "expo-router";
-import { StyleSheet } from "react-native";
+import { ScrollView, StyleSheet } from "react-native";
 import { useSelector } from "react-redux";
 
 export default function DetailsScreen() {
@@ -23,6 +25,10 @@ export default function DetailsScreen() {
     typeof id === "string" ? selectPlaceById(state, id) : undefined,
   );
 
+  const savedImages = useSelector((state: RootState) =>
+    typeof id === "string" ? selectImagesById(state, id) : [],
+  );
+
   if (!place) {
     return (
       <ThemedView style={globalStyles.container}>
@@ -31,41 +37,51 @@ export default function DetailsScreen() {
     );
   }
 
-  const handleDelete = () => {
+  const handleDelete = async () => {
     if (typeof id === "string") {
       dispatch(deletePlace(id));
 
       if (userId) {
-        dispatch(savePlacesAsync(userId));
+        // local
+        await dispatch(savePlacesAsync(userId))
+          .then(() => console.log("Saved to AsyncStorage"))
+          .catch((err) => console.error("AsyncStorage save failed:", err));
       }
+
+      // backend
+      dispatch(deletePlaceWithBackend({ placeId: id }))
+        .then(() => console.log("Delete place with Backend"))
+        .catch((err) => console.error("Backend delete place failed:", err));
     }
     // Navigate back without stacking another Home screen
     exitToPreviousOrHome(router, "/");
   };
 
   return (
-    <ThemedView style={globalStyles.container}>
-      <DetailsCard place={place} />
+    <ScrollView>
+      <ThemedView style={globalStyles.container}>
+        <ThemedView style={styles.buttons}>
+          <ActionButton
+            variant="primary"
+            onPress={() => router.push(`/add-edit?id=${place.id}`)}
+            style={styles.button}
+            testID="edit-button"
+          >
+            Edit
+          </ActionButton>
+          <ActionButton
+            variant="danger"
+            onPress={handleDelete}
+            style={styles.button}
+            testID="delete-button"
+          >
+            Delete
+          </ActionButton>
+        </ThemedView>
 
-      <ThemedView style={styles.buttons}>
-        <ActionButton
-          variant="primary"
-          onPress={() => router.push(`/add-edit?id=${place.id}`)}
-          style={styles.button}
-          testID="edit-button"
-        >
-          Edit
-        </ActionButton>
-        <ActionButton
-          variant="danger"
-          onPress={handleDelete}
-          style={styles.button}
-          testID="delete-button"
-        >
-          Delete
-        </ActionButton>
+        <DetailsCard place={place} images={savedImages} />
       </ThemedView>
-    </ThemedView>
+    </ScrollView>
   );
 }
 
@@ -74,7 +90,7 @@ const styles = StyleSheet.create({
   buttons: {
     flexDirection: "row",
     justifyContent: "space-between",
-    marginTop: 10,
+    marginBottom: 10,
     gap: 10,
   },
   // Individual button style
