@@ -95,7 +95,7 @@ export default function AddEditScreen() {
   const [deletedImageIds, setDeletedImageIds] = useState<string[]>([]);
 
   const MEDIA_TYPE_LIBRARY = "library";
-  const MEDIA_TYPE_CAMERA = "media";
+  const MEDIA_TYPE_CAMERA = "camera";
   const imagePickerOptions = {
     mediaTypes: ["images"],
     allowsEditing: true,
