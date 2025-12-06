@@ -124,5 +124,5 @@ export const deletePlaceWithBackend = createAsyncThunk<
   });
 
   if (!res.ok)
-    throw new Error(`Failed to create delete in backend: ${res.status} ${res.statusText}`);
+    throw new Error(`Failed to delete place in backend: ${res.status} ${res.statusText}`);
 });
