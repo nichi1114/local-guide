@@ -17,6 +17,7 @@ pub struct AuthService {
     userinfo_url: Url,
     http_client: reqwest::Client,
     provider_id: String,
+    mock_profile: Option<MockUserProfile>,
 }
 
 #[derive(Debug, Error)]
@@ -73,7 +74,46 @@ impl AuthService {
             userinfo_url,
             http_client,
             provider_id: config.provider_id,
+            mock_profile: None,
         })
+    }
+
+    #[allow(dead_code)]
+    pub fn new_mock(
+        repository: AuthRepository,
+        provider_id: impl Into<String>,
+        mock_profile: MockUserProfile,
+    ) -> Self {
+        let provider_id = provider_id.into();
+        let client = BasicClient::new(
+            ClientId::new("mock-client-id".to_string()),
+            None,
+            AuthUrl::new("http://localhost/mock-auth".to_string())
+                .expect("static mock auth url is valid"),
+            Some(
+                TokenUrl::new("http://localhost/mock-token".to_string())
+                    .expect("static mock token url is valid"),
+            ),
+        )
+        .set_redirect_uri(
+            RedirectUrl::new("http://localhost/mock-redirect".to_string())
+                .expect("static mock redirect url is valid"),
+        );
+
+        let userinfo_url = Url::parse("http://localhost/mock-userinfo")
+            .expect("static mock userinfo url is valid");
+        let http_client = reqwest::Client::builder()
+            .build()
+            .expect("static mock http client cannot fail");
+
+        Self {
+            repository,
+            client,
+            userinfo_url,
+            http_client,
+            provider_id,
+            mock_profile: Some(mock_profile),
+        }
     }
 
     pub async fn complete_oauth_flow(
@@ -81,6 +121,20 @@ impl AuthService {
         code: &str,
         code_verifier: Option<&str>,
     ) -> Result<UserRecord, AuthError> {
+        if let Some(profile) = &self.mock_profile {
+            return self
+                .repository
+                .upsert_user_with_identity(IdentityProfile {
+                    provider: &self.provider_id,
+                    provider_user_id: &profile.provider_user_id,
+                    email: profile.email.as_deref(),
+                    name: profile.name.as_deref(),
+                    avatar_url: profile.avatar_url.as_deref(),
+                })
+                .await
+                .map_err(AuthError::from);
+        }
+
         let mut request = self
             .client
             .exchange_code(AuthorizationCode::new(code.to_owned()));
@@ -138,6 +192,14 @@ struct ProviderUserInfo {
     email: Option<String>,
     name: Option<String>,
     picture: Option<String>,
+}
+
+#[derive(Clone)]
+pub struct MockUserProfile {
+    pub provider_user_id: String,
+    pub email: Option<String>,
+    pub name: Option<String>,
+    pub avatar_url: Option<String>,
 }
 
 #[cfg(test)]
