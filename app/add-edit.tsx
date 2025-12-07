@@ -38,6 +38,7 @@ const imagePickerOptions = {
 };
 const MEDIA_TYPE_LIBRARY = "library";
 const MEDIA_TYPE_CAMERA = "camera";
+type MediaType = typeof MEDIA_TYPE_LIBRARY | typeof MEDIA_TYPE_CAMERA;
 
 function isEmptyInput(value: string): boolean {
   return value.trim() === "";
@@ -122,21 +123,29 @@ export default function AddEditScreen() {
     setLocation(address);
   };
 
-  const grantImagePermissions = async (type: string) => {
-    if (type === MEDIA_TYPE_LIBRARY) {
-      const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
-      if (status !== "granted") {
-        Alert.alert("Permission required", "Permission to access the media library is required.");
-        return false;
+  const grantImagePermissions = async (type: MediaType): Promise<boolean> => {
+    switch (type) {
+      case MEDIA_TYPE_LIBRARY: {
+        const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+        if (status !== "granted") {
+          Alert.alert("Permission required", "Permission to access the media library is required.");
+          return false;
+        }
+        return true;
       }
-    } else if (type === MEDIA_TYPE_CAMERA) {
-      const { status } = await ImagePicker.requestCameraPermissionsAsync();
-      if (status !== "granted") {
-        Alert.alert("Permission required", "Permission to access the camera is required.");
-        return false;
+      case MEDIA_TYPE_CAMERA: {
+        const { status } = await ImagePicker.requestCameraPermissionsAsync();
+        if (status !== "granted") {
+          Alert.alert("Permission required", "Permission to access the camera is required.");
+          return false;
+        }
+        return true;
+      }
+      default: {
+        const _exhaustiveCheck: never = type;
+        return _exhaustiveCheck;
       }
     }
-    return true;
   };
 
   function handleImagePickerResult(result: ImagePicker.ImagePickerResult) {
