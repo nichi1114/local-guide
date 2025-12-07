@@ -14,7 +14,7 @@ jobs:
     env:
       BACKEND_URL: ${{ secrets.BACKEND_URL }}
       GOOGLE_ANDROID_CLIENT_ID: ${{ secrets.GOOGLE_ANDROID_CLIENT_ID }}
-      GOOGLE_ANDROID_REDIRECT_URL: ${{ secrets.GOOGLE_ANDROID_REDIRECT_URL }}
+      GOOGLE_ANDROID_REDIRECT_URI: ${{ secrets.GOOGLE_ANDROID_REDIRECT_URI }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
