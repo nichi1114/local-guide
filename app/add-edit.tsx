@@ -148,7 +148,7 @@ export default function AddEditScreen() {
     }
   };
 
-  function handleImagePickerResult(result: ImagePicker.ImagePickerResult) {
+  function handleImagePickerResult(result: ImagePicker.ImagePickerResult): void {
     if (result.canceled) return;
     const asset = result.assets?.[0];
     if (!asset?.uri) return;
@@ -168,7 +168,7 @@ export default function AddEditScreen() {
       return;
     }
 
-    let result = await ImagePicker.launchImageLibraryAsync(imagePickerOptions);
+    const result = await ImagePicker.launchImageLibraryAsync(imagePickerOptions);
 
     handleImagePickerResult(result);
   };
@@ -180,7 +180,7 @@ export default function AddEditScreen() {
       return;
     }
 
-    let result = await ImagePicker.launchCameraAsync(imagePickerOptions);
+    const result = await ImagePicker.launchCameraAsync(imagePickerOptions);
 
     handleImagePickerResult(result);
   };
