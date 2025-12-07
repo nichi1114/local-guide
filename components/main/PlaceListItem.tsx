@@ -7,7 +7,7 @@ import { savePlacesAsync } from "@/store/placeThunks";
 import { Place } from "@/types/place";
 import { useRouter } from "expo-router";
 import React from "react";
-import { Pressable, StyleSheet } from "react-native";
+import { Alert, Pressable, StyleSheet } from "react-native";
 import { useDispatch } from "react-redux";
 import { ThemedText } from "../themed-text";
 import { ThemedView } from "../themed-view";
@@ -34,6 +34,7 @@ export default function PlaceListItem({ place }: Props) {
       }
     } catch (err) {
       console.error("Backend delete place failed:", err);
+      Alert.alert("Delete Failed", "We couldn't delete this place. Please try again.");
     }
   };
 

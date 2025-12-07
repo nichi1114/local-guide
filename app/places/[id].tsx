@@ -11,7 +11,7 @@ import { savePlacesAsync } from "@/store/placeThunks";
 import { globalStyles } from "@/styles/globalStyles";
 import { exitToPreviousOrHome } from "@/utils/navigation";
 import { useLocalSearchParams, useRouter } from "expo-router";
-import { ScrollView, StyleSheet } from "react-native";
+import { Alert, ScrollView, StyleSheet } from "react-native";
 import { useSelector } from "react-redux";
 
 export default function DetailsScreen() {
@@ -54,6 +54,7 @@ export default function DetailsScreen() {
         exitToPreviousOrHome(router, "/");
       } catch (err) {
         console.error("Backend delete place failed:", err);
+        Alert.alert("Delete Failed", "We couldn't delete this place. Please try again.");
       }
     }
   };
