@@ -1,0 +1,13 @@
+# HTTP listener redirects everything to HTTPS.
+:80 {
+	redir https://{host}{uri}
+}
+
+# HTTPS listener for the Cloudflare-proxied hostname.
+:443 {
+	# Provide origin cert + key (e.g., Cloudflare Origin Certificate) at these paths.
+	tls /certs/origin.pem /certs/origin.key
+
+	# Forward to the Rust backend inside docker-compose.
+	reverse_proxy backend:8080
+}

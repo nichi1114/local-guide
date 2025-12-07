@@ -28,10 +28,21 @@ services:
     depends_on:
       db:
         condition: service_healthy
-    ports:
-      - "80:8080"
+    expose:
+      - "8080"
     volumes:
       - place_images:/app/data/place_images
+
+  caddy:
+    image: caddy:2-alpine
+    depends_on:
+      - backend
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - ./certs:/etc/ssl/cloudflare:ro
 
 volumes:
   db_data:
