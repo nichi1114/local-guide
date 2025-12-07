@@ -6,6 +6,10 @@ WORKDIR /app
 COPY Cargo.toml Cargo.lock .env ./
 COPY backend backend
 
+# Reduces memory usage during the build.
+ENV CARGO_NET_GIT_FETCH_WITH_CLI=true
+ENV CARGO_BUILD_JOBS=1
+
 RUN cargo build --locked --release --bin local-guide-backend
 
 FROM debian:bookworm-slim AS runtime
