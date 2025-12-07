@@ -6,7 +6,7 @@
 | Yiduo Jing  | 1000308142      | yiduo.jing@mail.utoronto.ca    |
 | Sitao Wang    | 1003695151      | sitao.wang@mail.utoronto.ca      |
 
-See the video demo.mp4 located in the assets folder or go to the shared link [demo.mp4](link).
+See the video [demo.mp4](./assets/demo.mp4) located in the assets folder or go to the shared link [demo.mp4](https://drive.google.com/file/d/18AAkZIl05CFvzhC3h-9L67To15fEW0sq/view?usp=sharing).
 
 ## Motivation
 With the rise of the internet and social media, people increasingly enjoy taking photos at popular, internet-famous locations. However, most current apps prioritize broad, global recommendations over personalized local exploration. This highlights the need for a lightweight mobile tool that enables users to record, revisit, and organize their own local discoveries in a single, convenient platform. Our app addresses this need by offering a straightforward and user-friendly platform for organizing local points of interest. The target users are local adventurers who enjoy exploring their city, trying new cafes, parks, or attractions, and want an easy way to record and remember those discoveries.
