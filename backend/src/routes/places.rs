@@ -30,7 +30,10 @@ pub fn router(state: AppState) -> Router {
 
     Router::new()
         .route("/places", post(create_place).get(list_places))
-        .route("/places/:id", get(get_place).patch(update_place))
+        .route(
+            "/places/:id",
+            get(get_place).patch(update_place).delete(delete_place),
+        )
         .route("/places/:id/images", get(list_images))
         .route("/places/:place_id/images/:image_id", get(get_place_image))
         .route_layer(middleware::from_fn_with_state(middleware_state, jwt_auth))
@@ -476,6 +479,30 @@ async fn get_place_image(
     Ok((headers, bytes).into_response())
 }
 
+async fn delete_place(
+    State(state): State<AppState>,
+    Extension(claims): Extension<JwtClaims>,
+    AxumPath(place_id): AxumPath<Uuid>,
+) -> Result<StatusCode, (StatusCode, Json<ErrorResponse>)> {
+    let repository = state.place_repository();
+    let image_store = state.image_store();
+
+    let Some((_place, _images)) = repository
+        .delete_place_for_user(claims.sub, place_id)
+        .await
+        .map_err(|err| {
+            error!(?err, "failed to delete place");
+            internal_error()
+        })?
+    else {
+        return Err(place_not_found());
+    };
+
+    image_store.remove_place_dir(place_id).await;
+
+    Ok(StatusCode::NO_CONTENT)
+}
+
 async fn load_images_for_place(
     repository: &PlaceRepository,
     user_id: Uuid,
@@ -793,6 +820,55 @@ mod tests {
             .await
             .expect("intruder image request");
         assert_eq!(forbidden_image.status(), StatusCode::NOT_FOUND);
+    }
+
+    #[tokio::test]
+    async fn delete_place_removes_records_and_files() {
+        let ctx = TestContext::new(super::router).await;
+        let user = ctx.insert_user().await;
+        let token = ctx.jwt.generate(&user).expect("jwt");
+
+        let place_id = Uuid::new_v4();
+        let image_id = Uuid::new_v4();
+        create_place_for_test(&ctx, &token, place_id, image_id).await;
+
+        let file_name: String =
+            sqlx::query_scalar("SELECT file_name FROM place_images WHERE id = $1")
+                .bind(image_id)
+                .fetch_one(&ctx.pool)
+                .await
+                .unwrap();
+        let image_path = ctx.image_dir().join(place_id.to_string()).join(&file_name);
+        assert!(image_path.exists());
+
+        let response = ctx
+            .app
+            .clone()
+            .oneshot(
+                Request::delete(format!("/places/{place_id}"))
+                    .header("Authorization", format!("Bearer {}", token))
+                    .body(Body::empty())
+                    .unwrap(),
+            )
+            .await
+            .expect("delete request");
+        assert_eq!(response.status(), StatusCode::NO_CONTENT);
+
+        let place_row: Option<Uuid> = sqlx::query_scalar("SELECT id FROM places WHERE id = $1")
+            .bind(place_id)
+            .fetch_optional(&ctx.pool)
+            .await
+            .unwrap();
+        assert!(place_row.is_none());
+
+        let image_row: Option<Uuid> =
+            sqlx::query_scalar("SELECT id FROM place_images WHERE id = $1")
+                .bind(image_id)
+                .fetch_optional(&ctx.pool)
+                .await
+                .unwrap();
+        assert!(image_row.is_none());
+        assert!(!image_path.exists());
     }
 
     #[tokio::test]

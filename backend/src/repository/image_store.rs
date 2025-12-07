@@ -76,6 +76,15 @@ impl ImageStore {
         }
     }
 
+    pub async fn remove_place_dir(&self, place_id: Uuid) {
+        let dir = self.base_dir.join(place_id.to_string());
+        if let Err(err) = fs::remove_dir_all(&dir).await {
+            if err.kind() != std::io::ErrorKind::NotFound {
+                error!(?err, ?dir, "failed to delete place image directory");
+            }
+        }
+    }
+
     pub async fn get_image(
         &self,
         place_id: Uuid,
