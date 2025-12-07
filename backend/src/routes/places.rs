@@ -1,7 +1,7 @@
 use std::collections::VecDeque;
 
 use axum::{
-    extract::{multipart::Multipart, Extension, Path as AxumPath, State},
+    extract::{multipart::Multipart, DefaultBodyLimit, Extension, Path as AxumPath, State},
     http::{header, HeaderMap, HeaderValue, StatusCode},
     middleware,
     response::{IntoResponse, Response},
@@ -22,6 +22,9 @@ use crate::repository::place::{
 use super::middleware::jwt_auth;
 use super::models::{ErrorResponse, PlaceImageResponse, PlaceResponse};
 
+// The default Axum body limit is 2MB, which is too small for typical phone photos.
+const MAX_MULTIPART_SIZE_BYTES: usize = 25 * 1024 * 1024;
+
 pub fn router(state: AppState) -> Router {
     let middleware_state = state.clone();
 
@@ -34,6 +37,7 @@ pub fn router(state: AppState) -> Router {
         .route("/places/:id/images", get(list_images))
         .route("/places/:place_id/images/:image_id", get(get_place_image))
         .route_layer(middleware::from_fn_with_state(middleware_state, jwt_auth))
+        .layer(DefaultBodyLimit::max(MAX_MULTIPART_SIZE_BYTES))
         .with_state(state)
 }
 

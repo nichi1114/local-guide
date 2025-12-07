@@ -5,22 +5,40 @@ import { ThemedView } from "@/components/themed-view";
 import { globalColors } from "@/constants/global-colors";
 import { AppDispatch, RootState } from "@/store";
 import { useAppSelector } from "@/store/hooks";
-import { addPlace, selectPlaceById, selectPlaceUserId, updatePlace } from "@/store/placeSlice";
+import { addPlaceWithBackend, updatePlaceWithBackend } from "@/store/placeBackendThunks";
+import { selectImagesById, selectPlaceById, selectPlaceUserId } from "@/store/placeSelectors";
+import { addLocalImages, addPlace, markImageDeleted, updatePlace } from "@/store/placeSlice";
 import { savePlacesAsync } from "@/store/placeThunks";
 import { globalStyles } from "@/styles/globalStyles";
+import { LocalImage } from "@/types/place";
 import { exitToPreviousOrHome } from "@/utils/navigation";
+import FontAwesome6 from "@expo/vector-icons/FontAwesome6";
+import { randomUUID } from "expo-crypto";
+import { Image } from "expo-image";
+import * as ImagePicker from "expo-image-picker";
 import * as Location from "expo-location";
 import { useLocalSearchParams, useRouter } from "expo-router";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
   Alert,
   KeyboardAvoidingView,
   Platform,
+  Pressable,
   ScrollView,
   StyleSheet,
   TextInput,
 } from "react-native";
-import { useDispatch, useSelector } from "react-redux";
+import { shallowEqual, useDispatch, useSelector } from "react-redux";
+
+const imagePickerOptions = {
+  mediaTypes: ["images"] as ImagePicker.MediaType[],
+  allowsEditing: true,
+  aspect: [4, 3] as [number, number],
+  quality: 1,
+};
+const MEDIA_TYPE_LIBRARY = "library";
+const MEDIA_TYPE_CAMERA = "camera";
+type MediaType = typeof MEDIA_TYPE_LIBRARY | typeof MEDIA_TYPE_CAMERA;
 
 function isEmptyInput(value: string): boolean {
   return value.trim() === "";
@@ -30,7 +48,7 @@ export async function userCurrentLocation() {
   let { status } = await Location.requestForegroundPermissionsAsync();
 
   if (status !== "granted") {
-    Alert.alert("Permission denied");
+    Alert.alert("Location Permission denied");
     return;
   }
 
@@ -74,11 +92,27 @@ export default function AddEditScreen() {
     typeof id === "string" ? selectPlaceById(state, id) : undefined,
   );
 
+  const savedImages = useAppSelector((state: RootState) => {
+    return typeof id === "string" ? selectImagesById(state, id) : [];
+  }, shallowEqual);
+
   // Create states
   const [name, setName] = useState<string>(place?.name || "");
   const [category, setCategory] = useState<string>(place?.category || "");
   const [location, setLocation] = useState<string>(place?.location || "");
   const [note, setNote] = useState<string>(place?.note || "");
+  const [newImages, setNewImages] = useState<LocalImage[]>([]);
+  const [deletedImageIds, setDeletedImageIds] = useState<string[]>([]);
+
+  const deletedSet = useMemo(() => new Set(deletedImageIds), [deletedImageIds]);
+  const displayedImages = useMemo(() => {
+    const seen = new Set<string>();
+    return [...savedImages.filter((img) => !deletedSet.has(img.id)), ...newImages].filter((img) => {
+      if (seen.has(img.id)) return false;
+      seen.add(img.id);
+      return true;
+    });
+  }, [deletedSet, newImages, savedImages]);
 
   useEffect(() => {
     if (place) {
@@ -97,7 +131,79 @@ export default function AddEditScreen() {
     setLocation(address);
   };
 
-  const handleSubmit = () => {
+  const grantImagePermissions = async (type: MediaType): Promise<boolean> => {
+    switch (type) {
+      case MEDIA_TYPE_LIBRARY: {
+        const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+        if (status !== "granted") {
+          Alert.alert("Permission required", "Permission to access the media library is required.");
+          return false;
+        }
+        return true;
+      }
+      case MEDIA_TYPE_CAMERA: {
+        const { status } = await ImagePicker.requestCameraPermissionsAsync();
+        if (status !== "granted") {
+          Alert.alert("Permission required", "Permission to access the camera is required.");
+          return false;
+        }
+        return true;
+      }
+      default: {
+        const _exhaustiveCheck: never = type;
+        return _exhaustiveCheck;
+      }
+    }
+  };
+
+  function handleImagePickerResult(result: ImagePicker.ImagePickerResult): void {
+    if (result.canceled) return;
+    const asset = result.assets?.[0];
+    if (!asset?.uri) return;
+
+    const newImage: LocalImage = {
+      id: randomUUID(),
+      uri: asset.uri,
+      saved: false,
+    };
+    setNewImages((prev) => [...prev, newImage]);
+  }
+
+  const pickImage = async () => {
+    const permissionResult = await grantImagePermissions(MEDIA_TYPE_LIBRARY);
+
+    if (!permissionResult) {
+      return;
+    }
+
+    const result = await ImagePicker.launchImageLibraryAsync(imagePickerOptions);
+
+    handleImagePickerResult(result);
+  };
+
+  const takePhoto = async () => {
+    const permissionResult = await grantImagePermissions(MEDIA_TYPE_CAMERA);
+
+    if (!permissionResult) {
+      return;
+    }
+
+    const result = await ImagePicker.launchCameraAsync(imagePickerOptions);
+
+    handleImagePickerResult(result);
+  };
+
+  const handleDeleteImage = (item: LocalImage) => {
+    if (item.saved) {
+      // delete saved images
+      setDeletedImageIds((prev) => [...prev, item.id]);
+    } else {
+      // remove just captured but unsaved images
+      setNewImages((prev) => prev.filter((img) => img.id !== item.id));
+    }
+  };
+
+  const handleSubmit = async () => {
     // Validate inputs
     if (isEmptyInput(name)) {
       Alert.alert("Error", "Please enter a name");
@@ -117,6 +223,7 @@ export default function AddEditScreen() {
 
     // note can be empty
 
+    let placeId: string | undefined = place?.id;
     // save to storage
     if (place) {
       // Dispatch updatePlace
@@ -132,21 +239,45 @@ export default function AddEditScreen() {
             },
           }),
         );
+        dispatch(markImageDeleted({ placeId: place.id, imageIds: deletedImageIds }));
+        dispatch(addLocalImages({ placeId: place.id, images: newImages }));
       }
     } else {
-      dispatch(
-        addPlace({
-          name,
-          category,
-          location,
-          note,
-        }),
-      );
+      placeId = randomUUID();
+      const newPlace = {
+        id: placeId,
+        name,
+        category,
+        location,
+        note,
+      };
+      dispatch(addPlace({ place: newPlace, images: newImages }));
     }
 
     if (userId) {
-      dispatch(savePlacesAsync(userId));
+      await dispatch(savePlacesAsync(userId)).catch((err) =>
+        console.error("AsyncStorage save failed:", err),
+      );
     }
+
+    if (placeId) {
+      try {
+        if (place) {
+          // update with backend
+          await dispatch(updatePlaceWithBackend({ placeId })).unwrap();
+        } else {
+          // add with backend
+          await dispatch(addPlaceWithBackend({ placeId })).unwrap();
+        }
+      } catch (err) {
+        console.error("Backend sync failed:", err);
+        Alert.alert("Sync Failed", "We couldn't save your changes to the server. Please try again.");
+        return;
+      }
+    }
+
+    setNewImages([]);
+    setDeletedImageIds([]);
 
     exitToPreviousOrHome(router, "/");
   };
@@ -189,12 +320,54 @@ export default function AddEditScreen() {
           />
           <ActionButton
             variant="primary"
-            style={styles.useLocationButton}
+            style={styles.button}
             onPress={handleUseCurrentLocation}
             testID="use-current-location-button"
           >
             Use Current Location
           </ActionButton>
+
+          <ThemedText type="defaultSemiBold">Images:</ThemedText>
+          <ThemedView style={styles.previewImagesContainer}>
+            {displayedImages.map((item, index) => (
+              <ThemedView key={item.id} style={styles.imagePreviewContainer}>
+                <Image
+                  source={{ uri: item.uri }}
+                  style={styles.image}
+                  accessibilityRole="image"
+                  accessibilityLabel={`Place photo ${index + 1}${name ? ` for ${name}` : ""}`}
+                />
+                <Pressable
+                  onPress={() => handleDeleteImage(item)}
+                  style={styles.deleteImageButton}
+                  accessibilityLabel={`Delete photo ${index + 1}${name ? ` for ${name}` : ""}`}
+                  accessibilityRole="button"
+                >
+                  <FontAwesome6 name="trash-can" size={24} color="red" />
+                </Pressable>
+              </ThemedView>
+            ))}
+          </ThemedView>
+
+          <ThemedView style={styles.mediaButtonsRow}>
+            <ActionButton
+              variant="primary"
+              style={[styles.button, styles.mediaButton]}
+              onPress={pickImage}
+              accessibilityLabel="Pick an image from library"
+            >
+              <FontAwesome6 name="image" size={20} color={globalColors.black} />
+            </ActionButton>
+            <ActionButton
+              variant="primary"
+              style={[styles.button, styles.mediaButton, styles.mediaButtonTrailing]}
+              onPress={takePhoto}
+              accessibilityLabel="Take a photo with camera"
+            >
+              <FontAwesome6 name="camera" size={20} color={globalColors.black} />
+            </ActionButton>
+          </ThemedView>
+
           <ThemedText type="defaultSemiBold">Note:</ThemedText>
           <TextInput
             style={styles.largerInput}
@@ -232,12 +405,36 @@ const styles = StyleSheet.create({
     ...baseInput,
     height: 100,
   },
-  useLocationButton: {
+  button: {
     ...baseInput,
     alignItems: "center",
     justifyContent: "center",
   },
   buttonSpacer: {
     height: 10,
+  },
+  previewImagesContainer: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+  },
+  mediaButtonsRow: {
+    flexDirection: "row",
+  },
+  mediaButton: {
+    flex: 1,
+    marginRight: 10,
+  },
+  mediaButtonTrailing: {
+    marginRight: 0,
+  },
+  imagePreviewContainer: { position: "relative", margin: 5 },
+  image: { width: 100, height: 100, borderRadius: 8 },
+  deleteImageButton: {
+    position: "absolute",
+    top: 4,
+    right: 4,
+    backgroundColor: "white",
+    padding: 6,
+    borderRadius: 20,
   },
 });

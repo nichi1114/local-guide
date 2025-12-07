@@ -1,11 +1,13 @@
 import { AppDispatch } from "@/store";
 import { useAppSelector } from "@/store/hooks";
-import { deletePlace, selectPlaceUserId } from "@/store/placeSlice";
+import { deletePlaceWithBackend } from "@/store/placeBackendThunks";
+import { selectPlaceUserId } from "@/store/placeSelectors";
+import { deletePlace } from "@/store/placeSlice";
 import { savePlacesAsync } from "@/store/placeThunks";
 import { Place } from "@/types/place";
 import { useRouter } from "expo-router";
 import React from "react";
-import { Pressable, StyleSheet } from "react-native";
+import { Alert, Pressable, StyleSheet } from "react-native";
 import { useDispatch } from "react-redux";
 import { ThemedText } from "../themed-text";
 import { ThemedView } from "../themed-view";
@@ -21,13 +23,18 @@ export default function PlaceListItem({ place }: Props) {
   const dispatch = useDispatch<AppDispatch>();
   const userId = useAppSelector(selectPlaceUserId);
 
-  const handleDelete = () => {
-    // update state
-    dispatch(deletePlace(place.id));
-
-    // save to storage
-    if (userId) {
-      dispatch(savePlacesAsync(userId));
+  const handleDelete = async () => {
+    try {
+      await dispatch(deletePlaceWithBackend({ placeId: place.id })).unwrap();
+      // update state after backend succeeds
+      dispatch(deletePlace(place.id));
+      // save to storage
+      if (userId) {
+        await dispatch(savePlacesAsync(userId));
+      }
+    } catch (err) {
+      console.error("Backend delete place failed:", err);
+      Alert.alert("Delete Failed", "We couldn't delete this place. Please try again.");
     }
   };
 

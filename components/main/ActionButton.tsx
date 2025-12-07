@@ -1,18 +1,37 @@
 // Reuse the ActionButton component implementation from Assignment.
 import { globalColors } from "@/constants/global-colors";
+import { ReactNode } from "react";
 import { Pressable, StyleProp, StyleSheet, Text, ViewStyle } from "react-native";
 
 type Variant = "primary" | "danger";
 
-type Props = {
+type BaseProps = {
   onPress: () => void;
-  children: string;
   variant: Variant;
   style?: StyleProp<ViewStyle>;
   testID?: string | undefined;
 };
 
-export default function ActionButton({ onPress, children, variant, style, testID }: Props) {
+type StringChildProps = BaseProps & {
+  children: string;
+  accessibilityLabel?: string;
+};
+
+type NonStringChildProps = BaseProps & {
+  children: Exclude<ReactNode, string>;
+  accessibilityLabel: string;
+};
+
+type Props = StringChildProps | NonStringChildProps;
+
+export default function ActionButton({
+  onPress,
+  children,
+  variant,
+  style,
+  testID,
+  accessibilityLabel,
+}: Props) {
   const variantColors = {
     primary: { base: globalColors.primary, pressed: globalColors.primaryPressed },
     danger: { base: globalColors.danger, pressed: globalColors.dangerPressed },
@@ -30,8 +49,11 @@ export default function ActionButton({ onPress, children, variant, style, testID
       onPress={onPress}
       testID={testID}
       accessibilityRole="button"
+      accessibilityLabel={
+        accessibilityLabel ?? (typeof children === "string" ? children : undefined)
+      }
     >
-      <Text style={styles.text}>{children}</Text>
+      {typeof children === "string" ? <Text style={styles.text}>{children}</Text> : children}
     </Pressable>
   );
 }
