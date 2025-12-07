@@ -97,7 +97,7 @@ When you tap on a specific POI card, you will be redirected to the details scree
 ## Development Guide
 
 ### Deployed Version
-Access the build at [ link ]. For more details about the build, refer to the **Deployment** section.
+For more details about the deployed build, refer to the **Deployment** section.
 
 ### Local Environment
 
