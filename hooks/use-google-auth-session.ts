@@ -27,6 +27,7 @@ const redirectUri =
     scheme: "com.ece1778.localguide",
     preferLocalhost: true,
   });
+const shouldUseProxy = GOOGLE_REDIRECT_URI ? false : Platform.OS !== "web";
 
 export function useGoogleAuthSession() {
   const dispatch = useAppDispatch();
@@ -57,6 +58,7 @@ export function useGoogleAuthSession() {
       platform: Platform.OS,
       providerId: GOOGLE_PROVIDER_ID,
       redirectUri,
+      useProxy: shouldUseProxy,
       requestReady: Boolean(request),
       hasCodeVerifier: Boolean(request?.codeVerifier),
       hasClientId: Boolean(GOOGLE_CLIENT_ID),
@@ -96,7 +98,7 @@ export function useGoogleAuthSession() {
 
     try {
       const result = await promptAsync({
-        useProxy: Platform.OS !== "web",
+        useProxy: shouldUseProxy,
       });
 
       debugAlert("Auth session completed", {
