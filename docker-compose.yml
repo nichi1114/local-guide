@@ -42,7 +42,7 @@ services:
       - "443:443"
     volumes:
       - ./Caddyfile:/etc/caddy/Caddyfile:ro
-      - /certs:/etc/ssl/cloudflare:ro
+      - /etc/ssl/cloudflare:/etc/certs:ro
 
 volumes:
   db_data:
