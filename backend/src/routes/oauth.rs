@@ -5,7 +5,7 @@ use axum::{
     Json, Router,
 };
 use serde::{Deserialize, Serialize};
-use tracing::error;
+use tracing::{error, info};
 
 use crate::app_state::AppState;
 use crate::auth_service::AuthError;
@@ -58,7 +58,13 @@ async fn finish_login(
     code: String,
     code_verifier: Option<&str>,
 ) -> Result<Json<LoginResponse>, (StatusCode, Json<ErrorResponse>)> {
+    info!(
+        %provider,
+        code_verifier_present = code_verifier.is_some(),
+        "received auth callback"
+    );
     let Some(service) = state.auth_service(&provider) else {
+        info!(%provider, "provider not configured");
         return Err(provider_not_configured(&provider));
     };
     let jwt_manager = state.jwt_manager();
@@ -70,6 +76,7 @@ async fn finish_login(
 
     let jwt_token = jwt_manager.generate(&user).map_err(map_jwt_error)?;
 
+    info!(%provider, user_id = %user.id, "login successful");
     Ok(Json(LoginResponse::from_user(user, jwt_token)))
 }
 
