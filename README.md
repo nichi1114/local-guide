@@ -64,7 +64,7 @@ All screens support a theme switch. Only images with a light theme will be displ
 
 To log in with your Google account, click the "Continue with Google" button. A successful login will redirect you to the home page.
 
-![Signin page](https://raw.githubusercontent.com/nichi1114/local-guide/refs/heads/main/assets/demo_images/signin_page.jpg)
+![Signin page](./assets/demo_images/signin_page.jpg)
 
 
 ### Home: `/`
@@ -73,26 +73,26 @@ On this screen, you will find two buttons. The "Add" button will take you to the
 
 A list of cards displaying places of interest is shown on this screen, featuring only the name, category, and location. Each card includes an "Edit" button, which redirects you to the edit place page, and a "Delete" button for removing the corresponding place.
 
-![Home page](https://raw.githubusercontent.com/nichi1114/local-guide/refs/heads/main/assets/demo_images/home_page.jpg)
+![Home page](./assets/demo_images/home_page.jpg)
 
 ### Settings: `/settings`
 
 Inside your Account card, you can see your username and email address. You can toggle the daily local notification reminder using the switch button. The logout button allows you to log out of your session.
 
-![Settings page](https://raw.githubusercontent.com/nichi1114/local-guide/refs/heads/main/assets/demo_images/settings_page.jpg)
+![Settings page](./assets/demo_images/settings_page.jpg)
 
 ### Add/Edit: `/add-edit`
 The add/edit page lets you input the following information: name (required), category (required), location (required), images (optional), and notes (optional) for the point of interest (POI). You can enter your current location by clicking the "Use Current Location" button. Images can be selected from your library using the image button, or you can capture them with the camera button.
 
-![Add/Edit page](https://raw.githubusercontent.com/nichi1114/local-guide/refs/heads/main/assets/demo_images/add_page.jpg)
+![Add/Edit page](./assets/demo_images/add_page.jpg)
 
-![Add/Edit page with image](https://raw.githubusercontent.com/nichi1114/local-guide/refs/heads/main/assets/demo_images/add_page.jpg)
+![Add/Edit page with image](./assets/demo_images/add_page_image.jpg)
 
 ### Details: `places/[id]`
 
 When you tap on a specific POI card, you will be redirected to the details screen. On the detail page, you can view all the details of the selected place. Additionally, you can click "Edit" to modify this place on the edit page, delete it, or navigate back to the home screen.
 
-![Detail page](https://raw.githubusercontent.com/nichi1114/local-guide/refs/heads/main/assets/demo_images/detail_page.jpg)
+![Detail page](./assets/demo_images/detail_page.jpg)
 
 ## Development Guide
 
