@@ -25,6 +25,7 @@ ENV PLACE_IMAGE_DIR=/app/data/place_images
 RUN mkdir -p "${PLACE_IMAGE_DIR}"
 
 COPY --from=builder /app/target/release/local-guide-backend /usr/local/bin/local-guide-backend
+COPY --from=builder /app/.env ./
 
 EXPOSE 8080
 
