@@ -333,7 +333,7 @@ export default function AddEditScreen() {
                   <Pressable
                     onPress={() => handleDeleteImage(item)}
                     style={styles.deleteImageButton}
-                    accessibilityLabel="Delete image"
+                    accessibilityLabel={`Delete photo ${index + 1}${name ? ` for ${name}` : ""}`}
                     accessibilityRole="button"
                   >
                     <FontAwesome6 name="trash-can" size={24} color="red" />
