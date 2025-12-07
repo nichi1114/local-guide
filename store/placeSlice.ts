@@ -68,13 +68,14 @@ export const placeSlice = createSlice({
     },
     markImageDeleted: (state, action: PayloadAction<{ placeId: string; imageIds: string[] }>) => {
       const { placeId, imageIds } = action.payload;
-      if (!state.deletedImages[placeId]) state.deletedImages[placeId] = [];
+      const deletedIds = state.deletedImages[placeId] || [];
       imageIds.forEach((id) => {
-        if (!state.deletedImages[placeId].includes(id)) state.deletedImages[placeId].push(id);
-        state.localImages[placeId] = (state.localImages[placeId] || []).filter(
-          (img) => img.id !== id,
-        );
+        if (!deletedIds.includes(id)) deletedIds.push(id);
       });
+      state.deletedImages[placeId] = deletedIds;
+      state.localImages[placeId] = (state.localImages[placeId] || []).filter(
+        (img) => !imageIds.includes(img.id),
+      );
     },
     clearDeletedImages: (state, action: PayloadAction<string>) => {
       delete state.deletedImages[action.payload];
