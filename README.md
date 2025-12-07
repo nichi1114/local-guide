@@ -186,9 +186,40 @@ npm expo start
 Use **Expo Go** to open the app.
 
 
-## Deployment Information
-Downloadable URL: [ link ]
-Details: [ .. ]
+## Deployment
+This backend consists of a Rust backend built with Axum, deployed in a containerized environment alongside a PostgreSQL database and a Caddy reverse proxy. All services run on a DigitalOcean Droplet, with secure ingress controlled by Cloudflare. Application builds (Expo & Gradle) are automated via a GitHub Actions CI workflow that triggers on pushes to main.
+
+### Backend Service
+The backend is a Rust application using Axum as the HTTP framework. Axum provides routing, request handling, and middleware capabilities while leveraging Rust’s asynchronous runtime through Tokio.
+
+The application includes all server-side logic—API endpoints, authentication, data processing—and communicates directly with the PostgreSQL database and disk image files.
+
+To keep deployments lean, the Rust server is containerized through a multi-stage Dockerfile that compiles the application in a builder image and then copies the resulting binary into a smaller final image designed for production.
+
+### Network
+Traffic from the outside world reaches the system through Cloudflare. We have a DNS record pointing to the droplet, and Cloudflare sits in front of it to provide security features and controlled access. Only Cloudflare’s network is allowed to send requests to the server. On the droplet, those requests first reach Caddy, which acts as a reverse proxy. Caddy:
+- accepts connections only from Cloudflare
+- forwards valid requests to the Axum server over the internal Docker network
+
+This ensures that the backend itself never handles raw external traffic and remains protected behind a controlled proxy layer.
+
+### Backend Orchestration
+The backend services are orchestrated using Docker Compose, which defines and manages multiple containers:
+- **Rust Backend Service:** The main application container running the Axum server.
+- **PostgreSQL Database:** A containerized PostgreSQL instance for data storage.
+- **Caddy Reverse Proxy:** A Caddy container that handles incoming requests and forwards them to the backend service.
+The service is hosted on a DigitalOcean Droplet, providing a reliable environment for the application.
+
+### APK Build
+We setup a GitHub Actions workflow to automate the build and deployment of the Android APK on push to main branch. The workflow performs the following steps:
+1. Checkout the repository.
+2. Set up Node.js, java and gradle environments.
+3. Install Expo CLI and other dependencies.
+4. Run Expo prebuild to generate native code.
+5. Build the APK using Gradle.
+6. Upload the generated APK as an artifact for download.
+
+We setup the necessary secrets in the GitHub repository settings to securely handle sensitive information during the build process.
 
 
 ## Individual Contributions
