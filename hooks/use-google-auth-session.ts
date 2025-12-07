@@ -1,5 +1,5 @@
 import { useCallback, useMemo, useState } from "react";
-import { Platform } from "react-native";
+import { Alert, Platform } from "react-native";
 import * as AuthSession from "expo-auth-session";
 import * as WebBrowser from "expo-web-browser";
 
@@ -52,8 +52,28 @@ export function useGoogleAuthSession() {
 
   const ready = useMemo(() => Boolean(request), [request]);
 
+  const showAuthDebugAlert = useCallback(() => {
+    const payload = {
+      platform: Platform.OS,
+      providerId: GOOGLE_PROVIDER_ID,
+      redirectUri,
+      requestReady: Boolean(request),
+      hasCodeVerifier: Boolean(request?.codeVerifier),
+      hasClientId: Boolean(GOOGLE_CLIENT_ID),
+      hasSession: Boolean(session),
+      hasJwtToken: Boolean(session?.jwt_token),
+    };
+    Alert.alert("Google Auth Debug", JSON.stringify(payload, null, 2));
+  }, [request, session]);
+
   const signInWithGoogle = useCallback(async () => {
+    const debugAlert = (message: string, details?: Record<string, unknown>) => {
+      const suffix = details ? `\n${JSON.stringify(details, null, 2)}` : "";
+      Alert.alert("Google Auth Debug", `${message}${suffix}`);
+    };
+
     if (!GOOGLE_CLIENT_ID) {
+      debugAlert("Missing Google client ID configuration");
       setError(
         "Missing Google client ID configuration. Please set the appropriate environment variable for your platform.",
       );
@@ -61,16 +81,27 @@ export function useGoogleAuthSession() {
     }
 
     if (!request) {
+      debugAlert("Auth request is still preparing");
       setError("Google auth request is still preparing. Please try again.");
       return null;
     }
 
+    debugAlert("Starting Google sign-in", {
+      redirectUri,
+      platform: Platform.OS,
+      providerId: GOOGLE_PROVIDER_ID,
+    });
     setIsLoading(true);
     setError(null);
 
     try {
       const result = await promptAsync({
         useProxy: Platform.OS !== "web",
+      });
+
+      debugAlert("Auth session completed", {
+        type: result.type,
+        hasCode: Boolean(result.params?.code),
       });
 
       if (result.type !== "success") {
@@ -82,15 +113,20 @@ export function useGoogleAuthSession() {
 
       const code = result.params?.code;
       if (!code) {
+        debugAlert("Missing authorization code from Google response");
         setError("Google response did not include an authorization code.");
         return null;
       }
 
       if (!request.codeVerifier) {
+        debugAlert("Missing PKCE code verifier");
         setError("PKCE code verifier is missing. Restart the sign-in flow.");
         return null;
       }
 
+      debugAlert("Sending auth code to backend", {
+        endpoint: `${API_BASE_URL}/auth/${GOOGLE_PROVIDER_ID}/callback`,
+      });
       const response = await fetchWithTimeout(
         `${API_BASE_URL}/auth/${GOOGLE_PROVIDER_ID}/callback`,
         {
@@ -106,6 +142,8 @@ export function useGoogleAuthSession() {
         10000,
       );
 
+      debugAlert("Backend responded", { status: response.status });
+
       if (!response.ok) {
         const errorPayload = await safeParseError(response);
         const detail = errorPayload?.message ?? `Backend responded with ${response.status}.`;
@@ -114,6 +152,7 @@ export function useGoogleAuthSession() {
 
       const payload = (await response.json()) as BackendLoginResponse;
       await dispatch(persistAuthSession(payload)).unwrap();
+      debugAlert("Login successful; session persisted");
       return payload;
     } catch (authError) {
       const isAbortError =
@@ -125,6 +164,10 @@ export function useGoogleAuthSession() {
           authError instanceof Error ? authError.message : "Unexpected error while signing in.";
         setError(message);
       }
+      debugAlert("Login failed", {
+        error:
+          authError instanceof Error ? authError.message : "unknown error",
+      });
       return null;
     } finally {
       setIsLoading(false);
@@ -138,6 +181,7 @@ export function useGoogleAuthSession() {
     error,
     ready,
     hasValidToken,
+    showAuthDebugAlert,
   };
 }
 
