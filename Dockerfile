@@ -1,9 +1,9 @@
-FROM rust:1.78 as builder
+FROM rust:1.91 as builder
 
 WORKDIR /app
 
 # Pre-copy manifests to leverage Docker layer caching for dependencies.
-COPY Cargo.toml Cargo.lock ./
+COPY Cargo.toml Cargo.lock .env ./
 COPY backend backend
 
 RUN cargo build --locked --release --bin local-guide-backend
