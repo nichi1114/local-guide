@@ -45,6 +45,7 @@ export default function RootLayout() {
             <Stack.Screen name="index" options={{ title: "Home" }} />
             <Stack.Screen name="add-edit" options={{ title: "" }} />
             <Stack.Screen name="settings" options={{ title: "Account" }} />
+            <Stack.Screen name="oauthredirect" options={{ headerShown: false }} />
             <Stack.Screen name="places/[id]" options={{ title: "Details" }} />
           </Stack>
           <StatusBar style="auto" />
